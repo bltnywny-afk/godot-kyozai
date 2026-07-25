@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>07 スクリプトを動かす — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="g1">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第1部 GODOTの地図／スクリプトを動かす</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="g1" data-title="スクリプトを動かす">
+  <p class="eyebrow">第1部 GODOTの地図 · <b class="lno"></b> · 15分</p>
+  <h2>スクリプトを動かす</h2>
+  <p class="aim">この回のねらい：ノードにスクリプトを付けて、実行して、結果を見る。この往復を身体に入れる。</p>
+
+  <p>ノードは並べただけでは決まった動きしかしません。<strong>自分の考えた動きをさせるには、ノードにスクリプト（プログラムのファイル）を付けます。</strong>この「付ける」操作を<strong>アタッチ</strong>と呼びます。教材のこの先で「main.gd をアタッチ」と書いてあったら、ここでやる操作のことです。</p>
+
+  <h3>アタッチする</h3>
+  <ul>
+    <li>シーンドックでノードを<strong>右クリック</strong>→「<strong>スクリプトをアタッチ</strong>」</li>
+    <li>ファイル名を確認して「作成」（ノード名から自動で付きます。<code>main.gd</code> など）</li>
+    <li>画面がスクリプトエディタに切り替わり、数行だけ書かれたファイルが開く</li>
+  </ul>
+
+  <p>アタッチされたノードには、シーンドックで<strong>巻物のアイコン</strong>が付きます。これを押せばいつでもスクリプトが開きます。</p>
+
+  <h3>最初の1行を書く</h3>
+  <p>開いたファイルに、次の2行を足してください（<code>extends</code> の行の下に）。</p>
+
+  <pre><code>func _ready() -> void:
+    print("こんにちは")</code></pre>
+
+  <p>F6で実行すると、何もない画面が開きますが、<strong>エディタ下部の「出力」パネル</strong>に「こんにちは」と表示されているはずです。</p>
+
+  <div class="note"><b>これがすべての基本です</b><p><code>print()</code> は、カッコの中身を出力パネルに表示する命令です。画面には出ません。<strong>「ちゃんと動いているか」「変数に何が入っているか」を確かめる道具</strong>として、この先ずっと使います。</p>
+  <p>そして <code>_ready()</code> は「このノードが用意できた瞬間に1回だけ呼ばれる」特別な関数です。同じ仲間に、毎フレーム呼ばれる <code>_process()</code> がいます。<strong>Godotのスクリプトは、この「決まったタイミングで呼ばれる関数」に、やりたいことを書いていく</strong>形をしています。</p></div>
+
+  <h3>インデント（字下げ）の決まり</h3>
+  <p>GDScriptでは、<strong>行頭の字下げに意味があります。</strong><code>func</code> の中身は、Tabキーで1段下げて書きます。下げ忘れたり、スペースとTabが混ざったりするとエラーになります。エラーが出たら、まず字下げを疑ってください。</p>
+
+  <div class="try"><b>やってみる</b><p>Node2Dにスクリプトをアタッチし、<code>_ready()</code> で <code>print("こんにちは")</code> を実行して出力パネルに表示させる。次に <code>_process(delta):</code> の中に print を書いて、大量に流れることを確認する（毎フレーム呼ばれている証拠です）。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

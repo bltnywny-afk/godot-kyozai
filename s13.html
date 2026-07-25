@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>18 シグナル — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s13">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第3部 ノードをつなぐ／シグナル</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s13" data-title="シグナル">
+  <p class="eyebrow">第3部 ノードをつなぐ · <b class="lno"></b> · 15分</p>
+  <h2>シグナル — 下から上へ知らせる</h2>
+  <p class="aim">この回のねらい：ノード同士の依存を一方通行に保つ。</p>
+
+  <p>シグナルは「何かが起きた」という通知です。押されたボタン、体力が0になった敵、範囲に入った物体。それぞれが声を上げ、聞きたい人が勝手に聞きます。</p>
+
+  <h3>使う側</h3>
+  <p>ノードドック（右側の「ノード」タブ）にシグナル一覧があり、ダブルクリックで接続先を選べます。コードでも書けます。</p>
+  <pre><code>func _ready() -> void:
+    $Button.pressed.connect(_on_button_pressed)
+
+func _on_button_pressed() -> void:
+    print("押された")</code></pre>
+
+  <h3>自分で作る側</h3>
+  <pre><code># enemy.gd
+signal died(points: int)
+
+func take_damage(n: int) -> void:
+    hp -= n
+    if hp <= 0:
+        died.emit(10)
+        queue_free()</code></pre>
+
+  <h3>方向のルール</h3>
+  <div class="note"><b>これだけは守る</b><p><strong>上（親）から下（子）へは、メソッドを直接呼ぶ。下から上へは、シグナルで知らせる。</strong></p><p>敵が「スコアを10増やせ」とHUDを直接触りに行くと、敵はHUDが存在するレベルでしか使えなくなります。敵は <code>died</code> と叫ぶだけにして、誰が聞くかは上に任せる。こうすると敵シーンは単体でテストでき、別のステージにもそのまま置けます。</p></div>
+
+  <div class="try"><b>やってみる</b><p>Buttonを置き、ノードドックの <code>pressed</code> をダブルクリックして接続する。生成された関数に <code>print</code> を書いて実行する。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

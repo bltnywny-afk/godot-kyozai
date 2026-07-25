@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>12 アニメーションをつける — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s7b">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第2部 ノードを選ぶ／アニメーションをつける</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s7b" data-title="アニメーションをつける">
+  <p class="eyebrow">第2部 ノードを選ぶ · <b class="lno"></b> · 15分</p>
+  <h2>アニメーションをつける — AnimationPlayer</h2>
+  <p class="aim">この回のねらい：動きをコードから切り離し、エディタ上で作れるようにする。</p>
+
+  <p>前回の <code>AnimatedSprite2D</code> は、絵のコマを順番に切り替えるだけの道具でした。<code>AnimationPlayer</code> はもっと広く、<strong>ノードのあらゆる値を時間で変えられます。</strong>位置、色、大きさ、表示・非表示、音量。しかも複数のノードをまとめて動かせます。</p>
+
+  <h3>3つの道具の使い分け</h3>
+  <table>
+    <tr><th>道具</th><th>向いていること</th></tr>
+    <tr><td><code>AnimatedSprite2D</code></td><td>絵がパラパラ変わるだけ。歩き、待機</td></tr>
+    <tr><td><code>AnimationPlayer</code></td><td>決まった動きを作り込む。ドアの開閉、登場、やられた演出</td></tr>
+    <tr><td><code>Tween</code></td><td>コードで計算しながら動かす。目的地が実行時に決まるもの</td></tr>
+  </table>
+
+  <p>判断の基準は<strong>「動きが最初から決まっているか」</strong>です。決まっているなら AnimationPlayer。実行してみないと分からないなら Tween。B1のバスの減速は、止まる位置が実行時に決まるので Tween でした。</p>
+
+  <h3>作り方</h3>
+  <p><code>AnimationPlayer</code> を子として追加すると、下パネルに「アニメーション」タブが現れます。ここが作業場です。</p>
+
+  <ul>
+    <li>「アニメーション」→「新規」で名前を付ける（<code>pop_up</code> など）</li>
+    <li>動かしたいノードを選び、インスペクタでプロパティの横にある<strong>鍵アイコン</strong>を押すとキーが打たれる</li>
+    <li>時間軸の位置を動かして値を変え、また鍵を押す。これで間が補間される</li>
+  </ul>
+
+  <table class="set">
+    <tr><th>設定</th><th>意味</th></tr>
+    <tr><td>Length</td><td>アニメーション全体の長さ（秒）</td></tr>
+    <tr><td>Loop</td><td>繰り返すかどうか</td></tr>
+    <tr><td>Autoplay on Load</td><td>読み込んだ瞬間に自動再生する</td></tr>
+    <tr><td>更新モード</td><td>なめらかに変える（Continuous）か、パッと切り替える（Discrete）か</td></tr>
+  </table>
+
+  <h3>トラックの正体</h3>
+  <p>難しく見えますが、中身は<strong>「どのノードの、どのプロパティを、何秒の時点で、いくつにするか」</strong>の一覧にすぎません。1行が1つのプロパティです。<code>Sprite2D:position</code> というトラック名は、Sprite2D の position を動かす、と読みます。</p>
+
+  <h3>コードから呼ぶ</h3>
+  <pre><code>$AnimationPlayer.play("pop_up")
+$AnimationPlayer.play_backwards("pop_up")   # 逆再生
+
+await $AnimationPlayer.animation_finished    # 終わるまで待つ
+queue_free()</code></pre>
+
+  <p><code>play_backwards</code> が地味に効きます。出てくる動きを1本作れば、引っ込む動きは逆再生で済みます。<strong>作るアニメーションが半分になります。</strong></p>
+
+  <h3>関数を呼ぶトラック</h3>
+  <p>トラック追加で<strong>「メソッド呼び出しトラック」</strong>を選ぶと、アニメーションの途中で関数を呼べます。攻撃モーションの「この瞬間に当たり判定を出す」といった処理は、コードで秒数を数えるよりこちらのほうが正確で、調整も早いです。</p>
+
+  <div class="note"><b>つまづきポイント</b>
+  <p>再生中のアニメーションは、対象のプロパティを<strong>毎フレーム上書きします。</strong>同じプロパティをコードでも動かしていると、必ずアニメーションが勝ちます。「コードで位置を変えているのに動かない」の多くはこれです。</p>
+  <p>もう一つ。Godot 4には <strong>RESET</strong> という特別なアニメーションがあります。編集中に値をいじって見た目が変わってしまったとき、これが初期状態を覚えていてくれます。作っておくと事故が減ります。</p></div>
+
+  <div class="try"><b>やってみる</b><p>Sprite2D に AnimationPlayer を付け、0秒で <code>position.y = 40</code>、0.3秒で <code>position.y = 0</code> のキーを打つ。実行して <code>play()</code> で下から飛び出す動きを作る。次に <code>play_backwards()</code> で引っ込むことを確認する。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

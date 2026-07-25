@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>B9 農場シム（常駐） — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="p9">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第6部 実践 — 9本を作る／農場シム（常駐）</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="p9" data-kind="build" data-sketch="1" data-title="農場シム（常駐）">
+  <p class="eyebrow">実践 B9 · 設計メモ</p>
+  <h2>デスクトップ常駐型 農場シミュレーション</h2>
+  <p class="aim">新しく覚える：透過ウィンドウと最前面表示／ウィンドウの移動／常駐と長時間動作／状態の復元。</p>
+
+  <div class="sketch"><b>この章は設計メモです</b><p>B1〜B6と違い、ここは<strong>手順書ではなく方針書</strong>です。構成と考え方の要点だけを置いてあります。B6まで作り終えて、実際に取りかかる段になったら、そのとき詳細版を用意してください。先に書いても、そのころには自分の判断で作れるようになっているはずです。</p></div>
+
+  <p>最後です。中身の大半は<strong>ここまでの8本の組み合わせ</strong>になります。作物の成長はB8の時間進行、猫ヘルパーの移動はB5の移動処理、UIはB4で覚えたもの。新しく学ぶのは<strong>ウィンドウ制御だけ</strong>です。だから最後に置いています。</p>
+
+  <h3>構成</h3>
+  <pre><code>Desktop (Node2D)
+├─ Farm (Node2D)          ← 畑・作物
+├─ CatHelper (Node2D)
+├─ DragHandle (Control)   ← 掴んでウィンドウを動かす
+└─ Menu (CanvasLayer)
+
+Autoload: FarmState  （成長状態・最終起動時刻）</code></pre>
+
+  <h3>ウィンドウの設定</h3>
+  <p><strong>プロジェクト設定 → 表示 → ウィンドウ</strong>で、透過（Per Pixel Transparency）を許可し、枠なし（Borderless）にします。あわせてビューポート側の背景も透過にする必要があります。コードからは次のように制御します。</p>
+
+  <pre><code>func _ready() -> void:
+    var w := get_window()
+    w.transparent = true
+    DisplayServer.window_set_flag(
+        DisplayServer.WINDOW_FLAG_ALWAYS_ON_TOP, true)
+
+func drag(delta_pos: Vector2i) -> void:
+    DisplayServer.window_set_position(
+        DisplayServer.window_get_position() + delta_pos)</code></pre>
+
+  <div class="note"><b>詰まりやすい点</b><p>透過の挙動はOSによって差があります。<strong>設計の早い段階で実機で確認</strong>してください。後から発覚すると作り直しになります。</p><p>常駐するので負荷も設計事項です。毎フレーム全部を描き直す必要はありません。作物の状態が変わったときだけ更新する形にします。</p><p>オフライン時間の進行を入れない設計（決定済み）は、実装をかなり楽にします。起動中の経過時間だけを見ればよくなるためです。</p></div>
+
+  <h3>作る順番</h3>
+  <ul>
+    <li>1. 普通のウィンドウで、畑と作物の成長だけを作る</li>
+    <li>2. セーブと復元</li>
+    <li>3. 透過・枠なし・最前面にする</li>
+    <li>4. ドラッグで移動できるようにする</li>
+    <li>5. 猫ヘルパー</li>
+    <li>6. 常駐時の負荷を下げる</li>
+  </ul>
+
+  <div class="try"><b>完成の目安</b><p>デスクトップの端に常駐し、他の作業を邪魔せず、閉じて開き直しても畑が続いている。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

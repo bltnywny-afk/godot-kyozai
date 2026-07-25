@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>10 見せるノード — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s7">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第2部 ノードを選ぶ／見せるノード</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s7" data-title="見せるノード">
+  <p class="eyebrow">第2部 ノードを選ぶ · <b class="lno"></b> · 15分</p>
+  <h2>見せるノード</h2>
+  <p class="aim">この回のねらい：画面に絵を出す3つのノードを使い分ける。</p>
+
+  <table>
+    <tr><th>ノード</th><th>用途</th></tr>
+    <tr><td><code>Sprite2D</code></td><td>静止画1枚。<code>Texture</code> に画像を入れるだけ。</td></tr>
+    <tr><td><code>AnimatedSprite2D</code></td><td>パラパラ動く絵。<code>SpriteFrames</code> にコマを登録する。</td></tr>
+    <tr><td><code>TileMapLayer</code></td><td>マップをタイルで敷き詰める。地形はこれ。</td></tr>
+  </table>
+
+  <h3>スプライトシートを切る</h3>
+  <p>Sprite2Dのインスペクタには <code>Animation</code> という項目があり、<code>Hframes</code> / <code>Vframes</code> で1枚の画像を格子状に分割できます。横に8コマ並んだシートなら Hframes=8 にして、<code>Frame</code> で何コマ目を出すか選びます。</p>
+
+  <h3>アニメを付けるとき</h3>
+  <p>AnimatedSprite2D は自分でコマ送りを持っています。コード側からは名前で呼ぶだけです。</p>
+  <pre><code>$AnimatedSprite2D.play("walk")
+$AnimatedSprite2D.flip_h = true   # 左向きに反転</code></pre>
+
+  <div class="note"><b>Godot 4での変更点</b><p>地形用のノードは <code>TileMap</code> から <code>TileMapLayer</code> に変わりました。古い記事は <code>TileMap</code> のままのことが多いので、読むときは注意してください。レイヤーごとにノードを分ける形になっています。</p></div>
+
+  <div class="try"><b>やってみる</b><p>手持ちのピクセルアートを1枚Sprite2Dに入れて表示する。ぼやけて見えたら、それは<a class="xref" data-ref="s18" href="s18.html">第18回</a>で直します。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

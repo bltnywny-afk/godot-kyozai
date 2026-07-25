@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>32 プロジェクトを守る — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="t7">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第5部 道具を使いこなす／プロジェクトを守る</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="t7" data-title="プロジェクトを守る">
+  <p class="eyebrow">第5部 道具を使いこなす · <b class="lno"></b> · 15分</p>
+  <h2>プロジェクトを守る — バックアップと履歴</h2>
+  <p class="aim">この回のねらい：壊れても戻れる状態にしておく。</p>
+
+  <div class="note"><b>先に言っておきます</b><p>作っていると<strong>必ず一度は壊します。</strong>触ってはいけないものを消す、直したつもりが動かなくなる、シーンが開けなくなる。そのとき戻れる場所があるかどうかで、続けられるかが決まります。</p></div>
+
+  <h3>いちばん簡単な方法</h3>
+  <p><strong>プロジェクトフォルダごとコピーして、日付を付けて残す。</strong>これだけでも効果があります。大きな変更に取りかかる前にやってください。</p>
+
+  <h3>Gitを使う</h3>
+  <p>変更の履歴を残せます。「動いていた時点」に戻れるのが最大の利点です。プロジェクトフォルダの直下に <code>.gitignore</code> というファイルを作り、次の内容を入れてください。</p>
+
+  <pre><code># Godot 4 が自動生成するもの
+.godot/
+
+# 書き出したファイル
+build/
+export/</code></pre>
+
+  <div class="note"><b><code>.godot/</code> を除外する理由</b><p>このフォルダは、Godotが素材を取り込んだ結果を貯めておく<strong>作業用の生成物</strong>です。中身は自動で作り直せます。サイズが大きく、変更も頻繁なので、履歴に入れる意味がありません。</p>
+  <p>逆に、素材の隣にある <code>.import</code> ファイルは<strong>残してください。</strong>取り込み設定そのものなので、これが無いと他の環境で設定が失われます。</p></div>
+
+  <h3>何を記録するか</h3>
+  <ul>
+    <li><strong>動いた状態でコミットする。</strong>壊れた状態で記録しても、戻り先になりません</li>
+    <li>「プレイヤーのジャンプを実装」のように、<strong>何をしたかが分かる一言</strong>を残す</li>
+    <li>1日の終わりに必ず1回。区切りがつかなくても、動いていれば残す</li>
+  </ul>
+
+  <h3>Godotのバージョンを固定する</h3>
+  <p>Godotは更新が速く、バージョンが変わると挙動が変わることがあります。<strong>制作中のプロジェクトは、バージョンを上げないほうが安全です。</strong>どのバージョンで作っているかを、プロジェクト内のメモに書いておいてください。</p>
+
+  <p>上げる必要が出たときは、必ずバックアップを取ってから。上げたあとは、全シーンを開いてエラーが出ないかを確認します。</p>
+
+  <h3>クラウド同期の注意</h3>
+  <p>OneDriveやDropboxの中にプロジェクトを置く場合、<code>.godot/</code> は<strong>同期から除外</strong>してください。Godotが書き込んでいる最中に同期がかかると、ファイルが壊れることがあります。</p>
+
+  <div class="try"><b>やってみる</b><p>いま作っているプロジェクトのフォルダをコピーして、日付を付けて保存する。余裕があれば <code>.gitignore</code> を作り、Gitで最初のコミットを残す。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

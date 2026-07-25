@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>11 マップを描く — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s7a">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第2部 ノードを選ぶ／マップを描く</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s7a" data-title="マップを描く">
+  <p class="eyebrow">第2部 ノードを選ぶ · <b class="lno"></b> · 15分</p>
+  <h2>マップを描く — TileSetとTileMapLayer</h2>
+  <p class="aim">この回のねらい：Godot内蔵のマップエディタで、地形を描けるようにする。</p>
+
+  <p><strong>Godotにはマップエディタが内蔵されています。</strong>別のツールを用意する必要はありません。2Dビューの上で、ペンで直接タイルを置いていきます。</p>
+
+  <h3>登場人物は3つ</h3>
+  <table>
+    <tr><th>もの</th><th>正体</th><th>役割</th></tr>
+    <tr><td>タイル画像</td><td>PNG1枚</td><td>16×16などのマス目に並べた素材</td></tr>
+    <tr><td><code>TileSet</code></td><td>リソース</td><td>どのマスが1枚のタイルか、当たり判定はどうか</td></tr>
+    <tr><td><code>TileMapLayer</code></td><td>ノード</td><td>実際に地形を並べる場所</td></tr>
+  </table>
+
+  <p>混乱しやすいのは、<strong>TileSet が「タイルの図鑑」で、TileMapLayer が「それを並べた地図」</strong>という関係です。図鑑は1つ作れば、複数の地図から使い回せます。</p>
+
+  <h3>準備の手順</h3>
+  <ul>
+    <li><code>TileMapLayer</code> ノードを追加する</li>
+    <li>インスペクタの <code>Tile Set</code> で「新規 TileSet」を作る</li>
+    <li>作った TileSet をクリックし、<code>Tile Size</code> を <strong>16 × 16</strong> にする</li>
+    <li>下パネルに現れる「TileSet」タブを開き、左下の「＋」でタイル画像を追加する</li>
+    <li>「タイルを自動的に作成しますか？」と聞かれたら「はい」</li>
+  </ul>
+
+  <p>これで図鑑ができました。下パネルを「TileMap」タブに切り替えると、左にタイルの一覧が出ます。</p>
+
+  <h3>描く</h3>
+  <table class="set">
+    <tr><th>操作</th><th>やること</th></tr>
+    <tr><td>置く</td><td>パレットでタイルを選び、ビュー上をドラッグ</td></tr>
+    <tr><td>消す</td><td>右ドラッグ、または消しゴムを選んでドラッグ</td></tr>
+    <tr><td>まとめて塗る</td><td>上部の矩形ツール、または塗りつぶしツール</td></tr>
+    <tr><td>タイルを吸い取る</td><td><code>Ctrl</code> を押しながらクリック（スポイト）</td></tr>
+    <tr><td>複数マスをまとめて置く</td><td>パレット上でドラッグして範囲選択</td></tr>
+  </table>
+
+  <h3>当たり判定を付ける</h3>
+  <p><strong>タイルを置いただけでは、地形は当たりません。</strong>ここが最初の関門です。</p>
+  <ul>
+    <li>TileSet を選び、インスペクタで「物理レイヤー」を1つ追加する</li>
+    <li>その <code>Layer</code> を <strong>world</strong> にする</li>
+    <li>下パネル「TileSet」タブ →「ペイント」を選び、対象を「物理レイヤー0」にする</li>
+    <li>各タイルをクリックすると当たり形を描ける。四角いタイルなら、既定の矩形ボタンで一発</li>
+  </ul>
+
+  <div class="note"><b>すり抜けるときの確認順</b><p>1. TileSet に物理レイヤーがあるか　2. タイルごとに当たり形を描いたか　3. 動かすノードの Mask に world が入っているか。この3つで大半は解決します。</p></div>
+
+  <h3>地形（オートタイル）を使う</h3>
+  <p><strong>これを知っているかどうかで、マップ作りの時間が数倍変わります。</strong></p>
+
+  <p>草地と土の境目を、角のタイル・辺のタイルと1枚ずつ選んで置いていくのは大変な作業です。<strong>地形機能</strong>を設定すると、隣り合うタイルを見て自動で正しい形を選んでくれます。</p>
+
+  <ul>
+    <li>TileSet のインスペクタで「地形セット」を1つ追加し、モードを <strong>「角と辺」</strong> にする</li>
+    <li>その中に地形を1つ作り、名前を「草」などにする</li>
+    <li>「ペイント」で対象を「地形」にし、各タイルの<strong>どの角・辺が草か</strong>を塗っていく</li>
+    <li>「TileMap」タブに「地形」の項目が増えるので、それを選んで描く</li>
+  </ul>
+
+  <p>あとは大まかに塗るだけで、境界のタイルが自動的に選ばれます。設定に10分ほどかかりますが、1面描くだけで元が取れます。</p>
+
+  <h3>レイヤーを分ける</h3>
+  <p><code>TileMapLayer</code> は<strong>複数置けます。</strong>ノードを分けて重ねる形です。</p>
+  <pre><code>Level
+├─ Ground     (TileMapLayer)   地面。当たり判定なし
+├─ Walls      (TileMapLayer)   壁。当たり判定あり
+└─ Decoration (TileMapLayer)   草や看板。当たり判定なし</code></pre>
+  <p>こうしておくと、地面を描き替えても壁が消えません。当たり判定を持つのは Walls だけにします。</p>
+
+  <h3>敵やアイテムもパレットから置ける</h3>
+  <p>TileSet のソースには、画像だけでなく<strong>シーンコレクション</strong>も追加できます。ここに <code>enemy.tscn</code> や <code>coin.tscn</code> を登録すると、<strong>タイルを描くのと同じ操作で敵やアイテムを配置できます。</strong>1つずつドラッグして並べるより圧倒的に速いです。</p>
+
+  <h3>タイルに情報を持たせる</h3>
+  <p>TileSet の「カスタムデータレイヤー」を使うと、タイルごとに好きな値を持たせられます。「このタイルは水」「このタイルは足音が違う」といった情報です。</p>
+  <pre><code>var data := tile_map.get_cell_tile_data(coords)
+if data and data.get_custom_data("is_water"):
+    slow_down()</code></pre>
+  <p>B7のローグライクで高さや水量を扱うときにも、この考え方が下敷きになります。</p>
+
+  <h3>外部ツールを使うべきか</h3>
+  <p><strong>Tiled</strong> や <strong>LDtk</strong> という専用のマップエディタもあり、読み込むプラグインも存在します。ただ、Godot 4の内蔵エディタは十分に強力で、<strong>プラグインを入れるとバージョン更新のたびに追従する手間</strong>が発生します。特別な理由がない限り、内蔵のもので進めてください。</p>
+
+  <div class="note"><b>現実的な話</b><p>マップ作りは<strong>プログラミングではなく作業</strong>です。そして制作時間の大半をここに持っていかれます。だから1面を小さくしてください。「短い面をたくさん」のほうが、「長い面を少し」より必ず早く完成します。</p></div>
+
+  <div class="try"><b>やってみる</b><p>TileMapLayer を1つ置き、16×16のタイル画像を登録して、地面を10マスほど描く。物理レイヤーを設定して、その上をキャラクターが歩けることを確認する。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

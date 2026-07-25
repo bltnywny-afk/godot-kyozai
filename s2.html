@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>03 シーン＝保存できる塊 — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s2">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第1部 GODOTの地図／シーン＝保存できる塊</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s2" data-title="シーン＝保存できる塊">
+  <p class="eyebrow">第1部 GODOTの地図 · <b class="lno"></b> · 15分</p>
+  <h2>シーン＝保存できるノードの塊</h2>
+  <p class="aim">この回のねらい：シーンとノードの関係をはっきりさせる。</p>
+
+  <p>ノードを組み合わせた木を、名前を付けてファイルに保存したものが<strong>シーン</strong>（<code>.tscn</code>）です。</p>
+
+  <p>特別な種類のノードがあるわけではありません。木のてっぺんのノード（ルートノード）ごと保存した、それだけです。だから「シーンとは何か」の答えは<strong>保存されたノードの木</strong>で足ります。</p>
+
+  <h3>何をシーンにするか</h3>
+  <p>目安は「<strong>使い回すか</strong>」と「<strong>それ単体で意味が通じるか</strong>」です。</p>
+  <ul>
+    <li>プレイヤー → 1体しか出ないが、まとまりとして意味がある → シーンにする</li>
+    <li>敵 → 何体も出る → 必ずシーンにする</li>
+    <li>弾、アイテム、UIのボタン1個 → 使い回す → シーンにする</li>
+    <li>ステージ全体 → それ自体が画面 → シーンにする</li>
+  </ul>
+
+  <p>逆に、Sprite2D 1個だけのようにその場限りのものは、わざわざシーンにしなくて構いません。</p>
+
+  <div class="note"><b>つまづきポイント</b><p>ルートノードの型は後から変えにくいです。「動くもの」ならCharacterBody2DやArea2D、「動かない見た目だけ」ならNode2D、「UI」ならControl。最初に選ぶ型だけは少し考えてから決めます。</p></div>
+
+  <div class="try"><b>やってみる</b><p>前回のNode2D＋Sprite2Dを <code>player.tscn</code> として保存する。ファイルシステムドックに現れることを確認する。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

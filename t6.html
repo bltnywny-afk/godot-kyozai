@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>31 書き出して配る — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="t6">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第5部 道具を使いこなす／書き出して配る</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="t6" data-title="書き出して配る">
+  <p class="eyebrow">第5部 道具を使いこなす · <b class="lno"></b> · 15分</p>
+  <h2>書き出して配る — エクスポート</h2>
+  <p class="aim">この回のねらい：作ったものを、他の人が遊べる形にする。</p>
+
+  <div class="note"><b>ここまでやって完成です</b><p>エディタで動くだけでは、まだ誰にも遊んでもらえません。<strong>1本目を作ったら、必ず一度書き出してみてください。</strong>ここで初めて分かる問題（フォントが出ない、音が鳴らない、重い）が必ずあります。</p></div>
+
+  <h3>最初の一度だけ：テンプレートの用意</h3>
+  <p>メニューの<strong>「エディタ」→「エクスポートテンプレートを管理」</strong>から、テンプレートをダウンロードします。数百MBあり、Godotのバージョンごとに必要です。<strong>これが無いと書き出せません。</strong></p>
+
+  <h3>書き出す</h3>
+  <ul>
+    <li><strong>「プロジェクト」→「エクスポート」</strong></li>
+    <li>「追加」で書き出したい形式（Windows Desktop、Web、Android など）を選ぶ</li>
+    <li>下の「プロジェクトをエクスポート」で保存先を決める</li>
+  </ul>
+
+  <table class="set">
+    <tr><th>形式</th><th>用途と注意</th></tr>
+    <tr><td>Windows Desktop</td><td>いちばん簡単。<code>.exe</code> ができる</td></tr>
+    <tr><td>Web</td><td>ブラウザで遊べる。ファイル名を <code>index.html</code> にする</td></tr>
+    <tr><td>Android</td><td>JDKとAndroid SDKの設定が別途必要。最初は後回しでよい</td></tr>
+  </table>
+
+  <h3>Web書き出しの注意</h3>
+  <p>できたファイルを直接ダブルクリックしても動きません。<strong>Webサーバー経由で開く必要があります。</strong>エディタの「ブラウザで実行」を使うか、配信サイトにアップロードして確認してください。</p>
+
+  <p>また、Godot 4のWeb書き出しは、サーバー側に特定の設定（SharedArrayBuffer を使うためのヘッダ）が必要な場合があります。配信サイトによっては設定項目が用意されているので、動かないときはそこを確認します。</p>
+
+  <h3>どこで配るか</h3>
+  <table>
+    <tr><th>場所</th><th>備考</th></tr>
+    <tr><td><strong>itch.io</strong></td><td>Godot製ゲームの定番。Web版もダウンロード版も置ける。無料。<strong>手順は下にまとめました</strong></td></tr>
+    <tr><td>GameJolt</td><td>同じくインディー向け。海外中心</td></tr>
+    <tr><td>自分のサイト</td><td>Web書き出しを置くだけ。完全に自由</td></tr>
+  </table>
+
+  <div class="note"><b>unityroom には投稿できません</b><p>国内のブラウザゲーム投稿先として名前が挙がりますが、<strong>unityroom は Unity 製ゲーム専用</strong>です。Godotで作ったものは投稿できません。国内向けに公開したい場合は、HTML5ゲームを受け付けている投稿サイトを探すか、itch.io に置いて日本語の紹介文を添える形になります。<strong>投稿先の受け入れ条件は変わることがあるので、公開前に各サイトの最新の規約を確認してください。</strong></p></div>
+
+  <h3>itch.io に公開する手順</h3>
+  <p>Web版を置く場合の流れです。</p>
+  <ul>
+    <li><strong>1.</strong> Godotで Web 向けにエクスポート。出力ファイル名を必ず <code>index.html</code> にする</li>
+    <li><strong>2.</strong> 出力された一式（<code>index.html</code>、<code>.js</code>、<code>.wasm</code>、<code>.pck</code> など）を<strong>zipにまとめる</strong>。このとき <code>index.html</code> が<strong>zipを開いてすぐの場所</strong>に来るようにする（フォルダを1段挟むと動きません）</li>
+    <li><strong>3.</strong> itch.io で新規プロジェクトを作り、<strong>Kind of project</strong> を <strong>HTML</strong> にする</li>
+    <li><strong>4.</strong> zipをアップロードし、<strong>「This file will be played in the browser」</strong>にチェックを入れる</li>
+    <li><strong>5.</strong> <strong>Viewport dimensions</strong> にゲームの表示サイズを入れる。320×180 のゲームなら、2倍や3倍の 640×360、960×540 などにすると見やすい</li>
+    <li><strong>6.</strong> 必要なら <strong>Fullscreen button</strong> をオンにする</li>
+    <li><strong>7.</strong> <strong>SharedArrayBuffer support</strong> の項目があればオンにする（Godot 4のWeb書き出しで必要になる場合があります）</li>
+    <li><strong>8.</strong> Visibility を Public にして保存</li>
+  </ul>
+
+  <div class="note"><b>まず Draft のまま試す</b><p>公開設定にする前に、Draft の状態で自分のブラウザから動作を確認してください。<strong>手元では動いたのに、アップすると真っ暗</strong>ということがよくあります。原因はたいてい、zipの構造か <code>index.html</code> の名前です。</p>
+  <p>スマートフォンからも確認してください。タッチ操作の反応や、画面サイズの収まりは実機でしか分かりません。</p></div>
+
+  <p>ダウンロード版を一緒に置くこともできます。Windows向けに書き出したものをzipにして同じプロジェクトにアップロードし、そちらは「ブラウザで動かす」のチェックを<strong>外し</strong>ます。1つのページで、ブラウザ版とダウンロード版の両方を配れます。</p>
+
+  <p>更新のたびに手で上げ直すのが面倒になったら、itch.io が配布している <code>butler</code> というコマンドライン用の道具があります。1行でアップロードできるようになります。</p>
+
+  <h3>書き出す前のチェック</h3>
+  <ul>
+    <li>デバッグ用の <code>print</code> を消したか</li>
+    <li>アイコンを設定したか（エクスポート設定の中にあります）</li>
+    <li>ウィンドウサイズは適切か</li>
+    <li>フォントや素材のライセンス表記が必要ではないか</li>
+    <li>終了する手段があるか（Web以外）</li>
+  </ul>
+
+  <div class="try"><b>やってみる</b><p>B1のバスの押しボタンを Windows 向けに書き出し、できた <code>.exe</code> を実行する。エディタの外で動くことを確認する。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

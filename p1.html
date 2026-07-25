@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>B1 バスの押しボタン — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="p1">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第6部 実践 — 9本を作る／バスの押しボタン</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="p1" data-kind="build" data-title="バスの押しボタン" data-file="main.gd">
+  <p class="eyebrow">実践 B1 · 全7ステップ · 規模：3〜5日</p>
+  <h2>バスの押しボタン</h2>
+  <p class="aim">新しく覚える：状態を enum で持つ／世界を動かして止める／Tweenで減速する／awaitで演出を順番に流す。</p>
+
+  <h3>作るものを先に決める</h3>
+  <div class="spec">
+    <p><strong>幼児向けの、音と反応で遊ぶバスごっこ。</strong></p>
+    <p>画面の上半分に、横から見たバスが走っている。下半分に大きな押しボタンが1つ。</p>
+    <p>ボタンを押すと「とまります」ランプが点いてチャイムが鳴る。次のバス停に着くとバスが減速して停まり、ドアが開いて乗客が1人降りる。ドアが閉まると発車し、ランプが消えて、また次のバス停へ向かう。これが延々と続く。</p>
+    <p><strong>失敗はない。</strong>押さなければ通過するだけ。何度押しても壊れない。押せば必ず何か反応が返る。</p>
+  </div>
+
+  <p>幼児向けなので、勝ち負けやスコアは入れません。そのぶん<strong>反応の確実さ</strong>に全部を注ぎます。押したのに何も起きない瞬間が1つでもあると、幼児は離れます。</p>
+
+  <h3>この章の考え方の芯</h3>
+  <div class="note"><b>2つだけ</b>
+    <p><strong>1. バスは動かない。世界が動く。</strong>バスは画面中央に固定したまま、背景と停留所を左へ流します。「停まる」は、流す速度を0にすることです。この視点に立つと、停車の実装が驚くほど簡単になります。</p>
+    <p><strong>2. いま何をしているかを、変数1つで持つ。</strong>走行中・停まりかけ・停車中・発車中。これを <code>enum</code> で持ち、処理の入口で必ず確認します。フラグを何個も並べると、必ず矛盾した状態が生まれます。</p>
+  </div>
+
+  <h3>ノード構成（完成形）</h3>
+  <pre><code>Main (Node2D)                  ← main.gd
+├─ TopView (Node2D)
+│  ├─ Sky (ColorRect)
+│  ├─ Scenery (Node2D)          ← 左へ流れる背景
+│  │  ├─ BgA (Sprite2D)
+│  │  └─ BgB (Sprite2D)
+│  ├─ BusStop (Node2D)          ← 停留所の標識
+│  │  └─ Sign (Sprite2D)
+│  ├─ Bus (Node2D)              ← 画面中央に固定
+│  │  ├─ Body (Sprite2D)
+│  │  ├─ Door (Sprite2D)
+│  │  └─ Lamp (Sprite2D)        ← 「とまります」
+│  └─ Passenger (Sprite2D)
+├─ UI (CanvasLayer)
+│  ├─ Panel (ColorRect)
+│  └─ StopButton (Button)
+├─ Chime (AudioStreamPlayer)
+└─ DoorSound (AudioStreamPlayer)</code></pre>
+
+  <div class="note"><b>絵は後回しでいい</b><p>ピクセルアートを先に描くと、そこで力尽きます。<strong>最初は全部 ColorRect（色の四角）で作ってください。</strong>バスは黄色い長方形、乗客は小さい四角で十分です。動きが完成してから Sprite2D に差し替えます。差し替えは、ノードの型を右クリック →「型を変更」で置き換えるだけです。</p></div>
+
+  <span class="stepnum">STEP 0</span>
+  <h3 class="st">プロジェクトの設定</h3>
+
+  <p>新規プロジェクトを作り、最初に3つだけ設定します。ここを飛ばすと、後で絵がぼやけて直すのが面倒になります。</p>
+
+  <table class="set">
+    <tr><th>場所</th><th>項目</th><th>値</th></tr>
+    <tr><td>表示 → ウィンドウ</td><td>Viewport Width</td><td>320</td></tr>
+    <tr><td>表示 → ウィンドウ</td><td>Viewport Height</td><td>480</td></tr>
+    <tr><td>表示 → ウィンドウ</td><td>Stretch → Mode</td><td>viewport</td></tr>
+    <tr><td>表示 → ウィンドウ</td><td>Stretch → Aspect</td><td>keep</td></tr>
+    <tr><td>レンダリング → テクスチャ</td><td>Default Texture Filter</td><td>Nearest</td></tr>
+  </table>
+
+  <p>縦320×480にしたのは、上下2画面にするためです。<strong>上が y=0〜300、下が y=300〜480</strong>。この配分でいきます。地面の高さは y=250 とします。</p>
+
+  <span class="stepnum">STEP 1</span>
+  <h3 class="st">背景が流れる</h3>
+
+  <p>まずバスも何もない状態で、背景だけを左へ流します。</p>
+
+  <table class="set">
+    <tr><th>ノード</th><th>型</th><th>設定</th></tr>
+    <tr><td>Main</td><td>Node2D</td><td>main.gd をアタッチ（やり方は<a class="xref" data-ref="g1" href="g1.html">第6回</a>）</td></tr>
+    <tr><td>TopView</td><td>Node2D</td><td>Position (0, 0)</td></tr>
+    <tr><td>Sky</td><td>ColorRect</td><td>Size (320, 300)、水色</td></tr>
+    <tr><td>Scenery</td><td>Node2D</td><td>Position (0, 0)</td></tr>
+    <tr><td>BgA</td><td>Sprite2D または ColorRect</td><td>幅320、Position (0, 200)</td></tr>
+    <tr><td>BgB</td><td>BgA と同じ</td><td>Position (320, 200)</td></tr>
+  </table>
+
+  <p>BgA と BgB は<strong>同じ絵を2枚</strong>並べます。1枚が左へ抜けたら、まとめて右へ戻す。これで無限にループします。</p>
+
+  <pre><code>extends Node2D
+
+const CRUISE_SPEED  := 60.0    # 走行速度（px/秒）
+const SCENERY_WIDTH := 320.0   # 背景1枚の幅
+
+var speed := CRUISE_SPEED
+
+@onready var scenery: Node2D = $TopView/Scenery
+
+
+func _process(delta: float) -> void:
+    scenery.position.x -= speed * delta
+    if scenery.position.x &lt;= -SCENERY_WIDTH:
+        scenery.position.x += SCENERY_WIDTH</code></pre>
+
+  <p><code>scenery.position.x += SCENERY_WIDTH</code> と足し算にしているのは、0に戻すのではなく<strong>行き過ぎた分を残す</strong>ためです。0に戻すと、フレームごとにわずかにガタつきます。</p>
+
+  <div class="check"><b>ここで確認</b><p>F5を押すと、背景が右から左へ途切れずに流れ続ける。継ぎ目でカクッと飛ばなければ成功です。</p></div>
+
+  <span class="stepnum">STEP 2</span>
+  <h3 class="st">バスとボタンを置く</h3>
+
+  <p>バスは画面中央に固定です。コードでは一切動かしません。</p>
+
+  <table class="set">
+    <tr><th>ノード</th><th>型</th><th>設定</th></tr>
+    <tr><td>Bus</td><td>Node2D</td><td>Position (160, 250)</td></tr>
+    <tr><td>Body</td><td>ColorRect</td><td>Size (110, 60)、Position (-55, -60)</td></tr>
+    <tr><td>Door</td><td>ColorRect</td><td>Size (16, 46)、Position (16, -46)</td></tr>
+    <tr><td>Lamp</td><td>ColorRect</td><td>Size (28, 10)、Position (-14, -76)、赤</td></tr>
+    <tr><td>UI</td><td>CanvasLayer</td><td>—</td></tr>
+    <tr><td>Panel</td><td>ColorRect</td><td>Size (320, 180)、Position (0, 300)</td></tr>
+    <tr><td>StopButton</td><td>Button</td><td>Size (200, 120)、Position (60, 330)、Text「とまります」</td></tr>
+  </table>
+
+  <div class="note"><b>なぜ Button か</b><p>幼児が指で押すので、<strong>当たり判定は大きく確実に</strong>する必要があります。Control系の Button は矩形が明確で、押した／離したの判定もGodotが面倒を見てくれます。Area2D でも作れますが、この用途では Button が正解です。絵ができたら <code>TextureButton</code> に差し替えます。</p></div>
+
+  <p>StopButton を選び、右の「ノード」タブから <code>pressed</code> シグナルを Main に接続します。</p>
+
+  <pre><code># 追加
+
+func _on_stop_button_pressed() -> void:
+    print("押された")</code></pre>
+
+  <div class="check"><b>ここで確認</b><p>バスが中央に立ち、下に大きなボタンがある。押すと下パネルの「出力」に文字が出る。</p></div>
+
+  <span class="stepnum">STEP 3</span>
+  <h3 class="st">状態を持たせ、停留所を流す</h3>
+
+  <p>ここが本章の核です。<strong>いま何をしているのか</strong>を1つの変数で表します。</p>
+
+  <pre><code># 追加
+
+enum State { RUNNING, STOPPING, STOPPED, DEPARTING }
+
+const STOP_INTERVAL := 900.0   # 次の停留所までの距離
+const STOP_DISTANCE := 40.0    # ここまで来たら減速を始める
+
+var state: State = State.RUNNING
+var requested := false          # 停車ボタンが押されたか
+
+@onready var bus_stop: Node2D = $TopView/BusStop
+@onready var bus: Node2D      = $TopView/Bus
+
+
+func _ready() -> void:
+    reset_bus_stop()
+
+
+func reset_bus_stop() -> void:
+    bus_stop.position.x = bus.position.x + STOP_INTERVAL</code></pre>
+
+  <p>そして <code>_process</code> を、世界を流す処理と判断の処理に分けます。</p>
+
+  <pre><code># _process を書き換える
+
+func _process(delta: float) -> void:
+    move_world(delta)
+
+    if state == State.RUNNING and requested:
+        var d := bus_stop.position.x - bus.position.x
+        if d &lt;= STOP_DISTANCE and d &gt; 0.0:
+            begin_stopping()
+
+
+func move_world(delta: float) -> void:
+    var d := speed * delta
+    scenery.position.x -= d
+    bus_stop.position.x -= d
+
+    if scenery.position.x &lt;= -SCENERY_WIDTH:
+        scenery.position.x += SCENERY_WIDTH
+    if bus_stop.position.x &lt; -60.0:
+        reset_bus_stop()
+
+
+func begin_stopping() -> void:
+    state = State.STOPPING
+    print("減速開始")</code></pre>
+
+  <p>停留所（BusStop）を TopView の下に作り、Sign として ColorRect を1つ入れておいてください。位置はコードが決めるので、エディタ上の位置はどこでも構いません。</p>
+
+  <div class="note"><b>なぜ状態とフラグの両方があるのか</b><p><code>state</code> は「バスがいま物理的に何をしているか」、<code>requested</code> は「乗客が降りたいと言っているか」。別のものなので、別に持ちます。ここを1つにまとめようとすると、必ず表現できない状況が出てきます。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>ボタンを押す関数で <code>requested = true</code> にしてみて、しばらく待つと「減速開始」が出力される。まだ止まりません。</p></div>
+
+  <span class="stepnum">STEP 4</span>
+  <h3 class="st">ランプとチャイム</h3>
+
+  <p>押した瞬間の反応を作ります。幼児向けでは、ここが一番大事な部分です。</p>
+
+  <pre><code># _on_stop_button_pressed を書き換える
+
+func _on_stop_button_pressed() -> void:
+    press_effect()              # 手応えは必ず返す
+    if requested:
+        return
+    if state == State.STOPPING or state == State.STOPPED:
+        return                  # いま停まるところなので受け付けない
+    requested = true
+    lamp.show()
+    $Chime.play()
+
+
+func press_effect() -> void:
+    var t := create_tween()
+    t.tween_property($UI/StopButton, "scale", Vector2(0.92, 0.92), 0.06)
+    t.tween_property($UI/StopButton, "scale", Vector2.ONE, 0.12)</code></pre>
+
+  <pre><code># 変数を追加
+
+@onready var lamp: ColorRect = $TopView/Bus/Lamp
+
+
+# _ready に追加
+    lamp.hide()</code></pre>
+
+  <div class="note"><b>設定を1つ</b><p>StopButton の <code>Pivot Offset</code> を <strong>(100, 60)</strong>（サイズの半分）にしてください。Controlノードの拡大は既定で左上を軸にするため、これを設定しないとボタンが左上へ寄って縮みます。</p></div>
+
+  <p><code>press_effect()</code> を <code>return</code> より<strong>前</strong>に置いているのが要点です。受け付けられない状況でも、押した手応えだけは必ず返ります。</p>
+
+  <div class="check"><b>ここで確認</b><p>ボタンを押すと、少し沈んで戻り、チャイムが鳴り、バスの上に赤いランプが点く。連打しても沈む動きは毎回出るが、チャイムは1回だけ。</p></div>
+
+  <span class="stepnum">STEP 5</span>
+  <h3 class="st">減速して、停留所にぴたりと停める</h3>
+
+  <p>速度を0にするだけでは、停留所の手前や先で止まってしまいます。<strong>残りの距離を、ちょうど使い切る時間</strong>を計算します。</p>
+
+  <pre><code># begin_stopping を書き換える
+
+func begin_stopping() -> void:
+    state = State.STOPPING
+    var d := bus_stop.position.x - bus.position.x
+    var time := 2.0 * d / speed       # 等減速で距離 d を進むのにかかる時間
+    var t := create_tween()
+    t.tween_property(self, "speed", 0.0, time)
+    t.tween_callback(arrive)
+
+
+func arrive() -> void:
+    state = State.STOPPED
+    print("到着")</code></pre>
+
+  <p>速度が一定の割合で <code>speed</code> から0まで落ちるとき、平均速度は <code>speed / 2</code>。だから進む距離は <code>speed / 2 × time</code> です。これが <code>d</code> と等しくなる <code>time</code> を求めると <code>2 × d / speed</code>。中学校の等加速度運動そのままです。</p>
+
+  <div class="note"><b>ここで曲線を付けない</b><p><code>set_trans(Tween.TRANS_SINE)</code> のような緩急を足したくなりますが、<strong>付けると上の計算が合わなくなり、停留所とずれます。</strong>Tweenの既定は直線変化なので、何も指定しないのが正解です。緩急が欲しくなったら、そのときに数式を作り直します。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>ボタンを押すと、バス停の標識が近づいてきて、なめらかに減速し、バスの真横でぴたりと止まる。出力に「到着」が出る。ずれるなら <code>STOP_DISTANCE</code> ではなく、標識の絵の原点位置を疑ってください。</p></div>
+
+  <span class="stepnum">STEP 6</span>
+  <h3 class="st">ドアが開いて、降りて、発車する</h3>
+
+  <p>順番に起きる演出は <code>await</code> で書くと、上から読める形になります。</p>
+
+  <pre><code># arrive を書き換え、以下を追加
+
+func arrive() -> void:
+    state = State.STOPPED
+    $DoorSound.play()
+    await open_door()
+    await let_passenger_out()
+    await close_door()
+    depart()
+
+
+func open_door():
+    var t := create_tween()
+    t.tween_property(door, "scale:x", 0.08, 0.35)
+    await t.finished
+
+
+func close_door():
+    var t := create_tween()
+    t.tween_property(door, "scale:x", 1.0, 0.35)
+    await t.finished
+
+
+func let_passenger_out():
+    passenger.position = Vector2(DOOR_X, GROUND_Y)
+    passenger.show()
+    var t := create_tween()
+    t.tween_property(passenger, "position:x", DOOR_X + 46.0, 1.1)
+    await t.finished
+    passenger.hide()
+
+
+func depart() -> void:
+    state = State.DEPARTING
+    requested = false
+    lamp.hide()
+    var t := create_tween()
+    t.tween_property(self, "speed", CRUISE_SPEED, 1.5)
+    t.tween_callback(_on_departed)
+
+
+func _on_departed() -> void:
+    state = State.RUNNING</code></pre>
+
+  <pre><code># 定数と変数を追加
+
+const DOOR_X   := 176.0   # ドアの位置。絵に合わせて調整する
+const GROUND_Y := 250.0   # 地面の高さ
+
+@onready var door: ColorRect       = $TopView/Bus/Door
+@onready var passenger: ColorRect  = $TopView/Passenger
+
+
+# _ready に追加
+    passenger.hide()</code></pre>
+
+  <div class="note"><b>ドアの向き</b><p><code>scale:x</code> を縮めると、既定では中心に向かって縮みます。ドアらしく片側へ引き込むには、Door の <strong><code>Centered</code> をオフ</strong>にして、原点が蝶番の側に来るように配置してください。ColorRect なら最初から左上が原点なので、そのままで自然に見えます。</p>
+  <p>停留所の標識は、ここでは戻しません。<code>move_world</code> が画面外に出たときに自動で戻します。発車の瞬間に戻すと、標識が目の前で消えてしまいます。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>押す → 停まる → ドアが開く → 乗客が降りて歩いて消える → ドアが閉まる → 発車してランプが消える → しばらく走ると次のバス停が来る。ここまで一周したら、<strong>ゲームとして完成です。</strong></p></div>
+
+  <span class="stepnum">STEP 7</span>
+  <h3 class="st">幼児向けの仕上げ</h3>
+
+  <p>動くようになってから、遊ぶ相手に合わせて詰めます。</p>
+
+  <ul>
+    <li><strong>ボタンを大きく。</strong>指が太いので、画面幅の6割以上を使って構いません。周囲に他の押せるものを置かない。</li>
+    <li><strong>音を先に、絵を後に。</strong>押した瞬間に音が出れば、それだけで「効いた」と伝わります。処理はチャイムの再生から書きます。</li>
+    <li><strong>止められる状態を作らない。</strong>ポーズもメニューも要りません。閉じるのは大人の役目です。</li>
+    <li><strong>速度を落とす。</strong><code>CRUISE_SPEED</code> を下げ、停留所の間隔を詰めて、押してから停まるまでを短くします。幼児は因果関係を数秒しか保持できません。</li>
+    <li><strong>ランプを点滅させる。</strong><code>create_tween().set_loops()</code> で <code>modulate:a</code> を往復させると点滅になります。</li>
+    <li><strong>最後に絵を入れる。</strong>ColorRect を右クリック →「型を変更」で Sprite2D にし、Texture を割り当てます。位置とサイズはそのまま引き継がれます。</li>
+  </ul>
+
+  <div class="try"><b>完成の目安</b><p>押す → 停まる → 降りる → 発車、が延々と繰り返せる。何度押しても壊れない。押せば必ず音か動きが返る。この3つが満たせたら、B1は完成です。B2へ進んでください。</p></div>
+
+
+  <h3>余裕ができたら足す機能</h3>
+  <p>ここから先は、作らなくても完成です。<strong>心に余裕があるときだけ</strong>手を出してください。上から順に、だいたい簡単な順に並んでいます。</p>
+  <p>各アイデアの「プロンプトをコピー」を押すと、<strong>ゲームの内容とコードの作りまで説明が入った質問文</strong>がコピーされます。Claudeの無料プランのチャットにそのまま貼れば、この教材の続きとして答えが返ってきます。</p>
+
+  <div class="idea"><span class="lv">やさしい</span>
+    <h4>停留所に名前をつける</h4>
+    <p>バス停ごとに違う名前を持たせ、到着したときに画面に出す。名前のリストを順番に回すだけで、乗っている感じが一気に強くなります。</p>
+    <button class="askbtn" data-ask="停留所ごとに違う名前を持たせて、バスが到着したときにその名前を画面に表示したいです。名前は数個をリストにして順番に回す形にしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">やさしい</span>
+    <h4>ランプを点滅させる</h4>
+    <p>「とまります」が点きっぱなしではなく、ゆっくり明滅する。幼児は動くものに強く反応するので、効果が大きい割に手間がかかりません。</p>
+    <button class="askbtn" data-ask="「とまります」ランプを、点きっぱなしではなくゆっくり明滅させたいです。停車したら明滅を止めて消す動きも含めて教えてください。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">やさしい</span>
+    <h4>お客さんをランダムにする</h4>
+    <p>降りてくる乗客を、数種類の中からランダムに選ぶ。犬や猫を混ぜると、毎回ちがう楽しみが生まれます。</p>
+    <button class="askbtn" data-ask="バス停で降りる乗客を、数種類の絵の中からランダムに選んで出したいです。毎回ちがうお客さんが降りてくるようにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">ふつう</span>
+    <h4>お客さんが乗ってくる</h4>
+    <p>降りるだけでなく、バス停で待っている人が乗り込む。停留所が近づいたら待っている人を表示し、ドアが開いたら吸い込まれるように消える。</p>
+    <button class="askbtn" data-ask="バス停で待っているお客さんを表示して、ドアが開いたらバスに乗り込んで消える動きを足したいです。降りる人と乗る人が両方いる形にしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">ふつう</span>
+    <h4>昼と夜が変わる</h4>
+    <p>走っているうちに空の色がゆっくり変わり、夜になるとバスの窓が光る。時間の流れを感じさせる演出です。</p>
+    <button class="askbtn" data-ask="走っているうちに空の色がゆっくり変わって、昼から夕方、夜へと移り変わるようにしたいです。夜になったらバスの窓が光るようにもしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">ふつう</span>
+    <h4>アナウンスの音声を鳴らす</h4>
+    <p>「つぎは、◯◯」と音声が流れる。停留所の名前と音声ファイルを対にして持たせます。自分の声を録って入れると、幼児の反応が変わります。</p>
+    <button class="askbtn" data-ask="停留所ごとに用意した音声ファイルを、次の停留所が近づいたときに再生したいです。停留所の名前と音声ファイルを対にして管理する方法を知りたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">むずかしい</span>
+    <h4>押しボタンを増やす</h4>
+    <p>座席ごとにボタンを複数置き、押されたボタンだけが光る。ボタンを別シーンにして並べる形になるので、<a class="xref" data-ref="s3" href="s3.html">第3回</a>のインスタンス化の練習になります。</p>
+    <button class="askbtn" data-ask="押しボタンを1つではなく複数にして、押されたボタンだけが光るようにしたいです。ボタンを別シーンにして並べる作りにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">むずかしい</span>
+    <h4>雨の日をつくる</h4>
+    <p>ときどき雨が降り、窓に水滴がつき、ワイパーが動く。パーティクルの入門としてちょうどいい題材です。</p>
+    <button class="askbtn" data-ask="ときどき雨が降る演出を足したいです。パーティクルで雨を降らせて、バスの窓のワイパーが動くようにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">むずかしい</span>
+    <h4>走った停留所の数を覚えておく</h4>
+    <p>アプリを閉じても、今までいくつのバス停を通ったかが残っている。セーブの入門で、B6以降で必ず必要になる知識です。</p>
+    <button class="askbtn" data-ask="これまでに通った停留所の数を保存して、アプリを閉じて開き直しても続きから数えられるようにしたいです。Godot 4でのセーブとロードの基本から知りたいです。">プロンプトをコピー</button>
+  </div>
+
+  <template id="ctx-p1">私はGodot 4でゲームを作っている初心者です。いま「バスの押しボタン」という幼児向けの小さなゲームを作っています。
+
+【ゲームの内容】
+・画面の上半分に横から見たバス、下半分に大きな押しボタンが1つ
+・ボタンを押すと「とまります」ランプが点いてチャイムが鳴る
+・次のバス停でバスが減速して停まり、ドアが開いて乗客が1人降りる
+・ドアが閉まると発車し、ランプが消えて、また次のバス停へ向かう（繰り返し）
+・幼児向けなので失敗はなく、何度押しても壊れない
+
+【画面設定】
+・解像度 320×480、Stretch Mode は viewport、Aspect は keep
+・上が y=0〜300、下が y=300〜480。地面の高さは y=250
+
+【ノード構成】
+Main (Node2D) ← main.gd がアタッチされている
+├─ TopView (Node2D)
+│  ├─ Sky (ColorRect)
+│  ├─ Scenery (Node2D) ├─ BgA ├─ BgB   ← 左へ流れる背景
+│  ├─ BusStop (Node2D) └─ Sign
+│  ├─ Bus (Node2D) ├─ Body ├─ Door ├─ Lamp   ← 画面中央に固定
+│  └─ Passenger
+├─ UI (CanvasLayer) ├─ Panel ├─ StopButton (Button)
+├─ Chime (AudioStreamPlayer)
+└─ DoorSound (AudioStreamPlayer)
+
+【いまのコードの作り】
+・バスは動かさず、背景と停留所を左へ流している（move_world 関数）
+・enum State { RUNNING, STOPPING, STOPPED, DEPARTING } と、requested という bool で状態を管理
+・停車は Tween で speed を 0 にする。減速時間は 2 × 距離 ÷ 速度 で計算して停留所にぴたりと合わせている
+・ドアの開閉と降車の演出は await で順番に流している
+
+【やりたいこと】
+</template>
+
+  <h3>main.gd 全文</h3>
+
+  <pre><code>extends Node2D
+
+# ---- 状態 ----
+enum State { RUNNING, STOPPING, STOPPED, DEPARTING }
+
+# ---- 調整用の値 ----
+const CRUISE_SPEED  := 60.0     # 通常の走行速度（px/秒）
+const STOP_DISTANCE := 40.0     # 停留所がここまで来たら減速を始める
+const STOP_INTERVAL := 900.0    # 次の停留所までの距離
+const SCENERY_WIDTH := 320.0    # 背景1枚の幅
+const DOOR_X        := 176.0    # ドアの位置
+const GROUND_Y      := 250.0    # 地面の高さ
+
+var state: State = State.RUNNING
+var requested := false
+var speed := CRUISE_SPEED
+
+@onready var scenery: Node2D       = $TopView/Scenery
+@onready var bus_stop: Node2D      = $TopView/BusStop
+@onready var bus: Node2D           = $TopView/Bus
+@onready var door: ColorRect       = $TopView/Bus/Door
+@onready var lamp: ColorRect       = $TopView/Bus/Lamp
+@onready var passenger: ColorRect  = $TopView/Passenger
+
+
+func _ready() -> void:
+    lamp.hide()
+    passenger.hide()
+    reset_bus_stop()
+
+
+func _process(delta: float) -> void:
+    move_world(delta)
+
+    if state == State.RUNNING and requested:
+        var d := bus_stop.position.x - bus.position.x
+        if d &lt;= STOP_DISTANCE and d &gt; 0.0:
+            begin_stopping()
+
+
+# ---- 世界を流す。バスは動かない ----
+func move_world(delta: float) -> void:
+    var d := speed * delta
+    scenery.position.x -= d
+    bus_stop.position.x -= d
+
+    if scenery.position.x &lt;= -SCENERY_WIDTH:
+        scenery.position.x += SCENERY_WIDTH
+    if bus_stop.position.x &lt; -60.0:
+        reset_bus_stop()
+
+
+func reset_bus_stop() -> void:
+    bus_stop.position.x = bus.position.x + STOP_INTERVAL
+
+
+# ---- ボタン ----
+func _on_stop_button_pressed() -> void:
+    press_effect()
+    if requested:
+        return
+    if state == State.STOPPING or state == State.STOPPED:
+        return
+    requested = true
+    lamp.show()
+    $Chime.play()
+
+
+func press_effect() -> void:
+    var t := create_tween()
+    t.tween_property($UI/StopButton, "scale", Vector2(0.92, 0.92), 0.06)
+    t.tween_property($UI/StopButton, "scale", Vector2.ONE, 0.12)
+
+
+# ---- 停車 ----
+func begin_stopping() -> void:
+    state = State.STOPPING
+    var d := bus_stop.position.x - bus.position.x
+    var time := 2.0 * d / speed
+    var t := create_tween()
+    t.tween_property(self, "speed", 0.0, time)
+    t.tween_callback(arrive)
+
+
+func arrive() -> void:
+    state = State.STOPPED
+    $DoorSound.play()
+    await open_door()
+    await let_passenger_out()
+    await close_door()
+    depart()
+
+
+func open_door():
+    var t := create_tween()
+    t.tween_property(door, "scale:x", 0.08, 0.35)
+    await t.finished
+
+
+func close_door():
+    var t := create_tween()
+    t.tween_property(door, "scale:x", 1.0, 0.35)
+    await t.finished
+
+
+func let_passenger_out():
+    passenger.position = Vector2(DOOR_X, GROUND_Y)
+    passenger.show()
+    var t := create_tween()
+    t.tween_property(passenger, "position:x", DOOR_X + 46.0, 1.1)
+    await t.finished
+    passenger.hide()
+
+
+# ---- 発車 ----
+func depart() -> void:
+    state = State.DEPARTING
+    requested = false
+    lamp.hide()
+    var t := create_tween()
+    t.tween_property(self, "speed", CRUISE_SPEED, 1.5)
+    t.tween_callback(_on_departed)
+
+
+func _on_departed() -> void:
+    state = State.RUNNING</code></pre>
+
+  <h3>詰まったときの確認手順</h3>
+  <table>
+    <tr><th>症状</th><th>見るところ</th></tr>
+    <tr><td>ボタンを押しても何も起きない</td><td><code>pressed</code> シグナルが接続されているか。ノードドックで確認する</td></tr>
+    <tr><td>背景の継ぎ目が飛ぶ</td><td><code>SCENERY_WIDTH</code> が実際の絵の幅と一致しているか</td></tr>
+    <tr><td>停留所とずれて止まる</td><td>標識の原点位置。<code>Centered</code> と <code>Offset</code> を見る</td></tr>
+    <tr><td>止まらずに通り過ぎる</td><td>実行中に「リモート」ツリーで <code>speed</code> と <code>state</code> の値を見る</td></tr>
+    <tr><td>ボタンが左上に縮む</td><td>StopButton の <code>Pivot Offset</code></td></tr>
+    <tr><td>2回目以降停まらない</td><td><code>depart()</code> で <code>requested = false</code> に戻しているか</td></tr>
+  </table>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

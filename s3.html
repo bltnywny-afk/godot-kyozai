@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>04 シーンを部品として使う — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s3">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第1部 GODOTの地図／シーンを部品として使う</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s3" data-title="シーンを部品として使う">
+  <p class="eyebrow">第1部 GODOTの地図 · <b class="lno"></b> · 15分</p>
+  <h2>シーンを部品として使う（インスタンス）</h2>
+  <p class="aim">この回のねらい：シーンの入れ子構造を理解する。</p>
+
+  <p>保存したシーンは、別のシーンの中に<strong>ノードとして置けます</strong>。これをインスタンス化と言います。</p>
+
+  <pre><code>Level              ← level.tscn
+├─ TileMapLayer
+├─ Player          ← player.tscn を置いたもの
+├─ Enemy           ← enemy.tscn
+├─ Enemy           ← enemy.tscn（同じものをもう1つ）
+└─ Enemy</code></pre>
+
+  <p>置いたシーンは、シーンドックでは閉じた1つのノードとして表示されます。中身を開きたいときは、横に出る映画のカチンコのようなアイコンを押すと、そのシーンの編集に切り替わります。</p>
+
+  <h3>1か所直せば全部直る</h3>
+  <p>これが一番大事な効果です。<code>enemy.tscn</code> のスプライトを差し替えれば、置いてある3体すべてが変わります。敵の種類ごとにコピーを作って回るのではなく、元のシーンを1つ直す。<strong>同じものが2つ以上出るなら、必ずシーンにして置く</strong>と覚えてください。</p>
+
+  <h3>コードから増やす</h3>
+  <p>ゲーム中に敵や弾を出すときも、同じ仕組みを使います。</p>
+  <pre><code>@export var enemy_scene: PackedScene
+
+func spawn() -> void:
+    var e := enemy_scene.instantiate()
+    e.position = Vector2(100, 50)
+    add_child(e)</code></pre>
+
+  <div class="try"><b>やってみる</b><p>新しいシーンを作り、ファイルシステムから <code>player.tscn</code> をドラッグして中に置く。2つ置いて、片方だけ位置を変えてみる。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

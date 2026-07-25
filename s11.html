@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>16 親子関係が持つ意味 — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s11">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第3部 ノードをつなぐ／親子関係が持つ意味</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s11" data-title="親子関係が持つ意味">
+  <p class="eyebrow">第3部 ノードをつなぐ · <b class="lno"></b> · 15分</p>
+  <h2>親子関係が持つ意味</h2>
+  <p class="aim">この回のねらい：親子にする／しないの判断を言葉にする。</p>
+
+  <p>子ノードの位置は、<strong>親から見た相対位置</strong>です。インスペクタの <code>Position</code> は親を原点にした値で、画面上の絶対位置は <code>global_position</code> になります。</p>
+
+  <p>位置だけでなく、回転・拡大・表示／非表示・処理の停止も親から子へ伝わります。親を <code>hide()</code> すれば子も消えるし、親を <code>queue_free()</code> すれば子ごと消えます。</p>
+
+  <h3>親子にする基準</h3>
+  <ul>
+    <li><strong>一緒に動く</strong> → 親子にする（キャラと武器、キャラと当たり判定）</li>
+    <li><strong>一緒に消える</strong> → 親子にする（敵と敵のHPバー）</li>
+    <li>別々に動く・別々に生き死にする → 親子にしない</li>
+  </ul>
+
+  <div class="note"><b>落とし穴</b><p>弾をプレイヤーの子にすると、プレイヤーが回転したり倒れたりしたときに飛んでいる弾まで一緒に動きます。<strong>撃った瞬間に切り離す</strong>のが定石で、弾はレベル側に <code>add_child</code> します。</p></div>
+
+  <pre><code># プレイヤーの中で
+var b := bullet_scene.instantiate()
+b.global_position = $Muzzle.global_position
+get_parent().add_child(b)   # 自分の子にはしない</code></pre>
+
+  <div class="try"><b>やってみる</b><p>Node2Dの子にSprite2Dを置き、親を45度回転させる。子のPositionの数値は変わらないのに画面上の位置が変わることを確認する。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

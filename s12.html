@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>17 シーンの割り方 — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s12">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第3部 ノードをつなぐ／シーンの割り方</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s12" data-title="シーンの割り方">
+  <p class="eyebrow">第3部 ノードをつなぐ · <b class="lno"></b> · 15分</p>
+  <h2>シーンの割り方 — 1シーン1役割</h2>
+  <p class="aim">この回のねらい：作り始める前に構成を決められるようにする。</p>
+
+  <p>設計で失敗する原因はほぼ1つで、<strong>1つのシーンに役割を詰め込みすぎる</strong>ことです。レベルのシーンにプレイヤーの操作もUIの更新もスコア計算も書いてしまうと、あとから触れなくなります。</p>
+
+  <h3>役割で切る</h3>
+  <p>「このシーンは一言で何をするものか」を説明できるかで判定します。説明に「と」が2回入ったら分割の合図です。</p>
+
+  <pre><code>Main
+├─ Level        地形を持ち、キャラを配置する
+│  ├─ Player    入力を受けて動く
+│  └─ Enemy     プレイヤーを追う
+└─ HUD          数値を表示する</code></pre>
+
+  <h3>作る順番</h3>
+  <p>いきなり全体を組まないでください。<strong>一番小さくて確認しやすいものから作る</strong>のが早道です。</p>
+  <ul>
+    <li>1. Playerシーン単体を作り、F6でそれだけ実行して動かす</li>
+    <li>2. Levelシーンを作り、Playerを置く</li>
+    <li>3. Enemyシーン単体を作って動きを確認、Levelに置く</li>
+    <li>4. 最後にHUDを足す</li>
+  </ul>
+
+  <p><strong>F6は「いま開いているシーンだけ実行」</strong>です。これを使うと、ゲーム全体を起動しなくても部品単体を試せます。設計の自由度はここから来ます。</p>
+
+  <div class="try"><b>やってみる</b><p>player.tscn を開いた状態でF6を押す。プレイヤーだけの画面が立ち上がることを確認する。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>B5 横スクロールアクション — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="p5">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第6部 実践 — 9本を作る／横スクロールアクション</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="p5" data-kind="build" data-title="横スクロールアクション" data-file="player.gd">
+  <p class="eyebrow">実践 B5 · 全10ステップ · 規模：3〜4週間</p>
+  <h2>横スクロールアクション — 和風の道中</h2>
+  <p class="aim">新しく覚える：CharacterBody2Dと重力・ジャンプ／TileMapLayerでの地形／カメラ追従／攻撃判定／レイヤーとマスク／ステージの繋ぎ。</p>
+
+  <div class="note"><b>この章の位置づけ</b>
+  <p>目指すのは<strong>和風の横スクロールアクション</strong>。近接攻撃で敵を倒し、小判を集め、関所（ゴール）を目指す。全5ステージ、1面あたり1〜2分。小さくまとまった、最後まで遊べる1本です。</p>
+  <p>町を歩いて住人と話し、店で買い物をするパートは<strong>B6の技術</strong>です（マップ間の移動・会話・所持品の管理）。ここでは道中のアクションに絞り、B6でその上に町を足します。2本を作り終えた時点で骨格が揃います。</p></div>
+
+  <div class="note"><b>進め方の注意</b><p>これまでの章は新しい要素が2〜3個でした。この章は10個近くあります。<strong>1ステップずつ実行して確認しないと、どこが原因か分からなくなります。</strong>まとめて書きたくなりますが、必ず区切ってください。</p></div>
+
+  <h3>作るものを先に決める</h3>
+  <div class="spec">
+    <p><strong>和風の横スクロールアクション。全5ステージ。</strong></p>
+    <p>主人公は走る・ジャンプする・棒を振って攻撃する。敵に触れると体力が1減り、3つ無くなるとステージの最初からやり直し。穴に落ちても同じ。</p>
+    <p>道中には小判が置いてある。集めると数が増える。ステージの終わりには関所があり、触れると次のステージへ。</p>
+    <p>1ステージは1〜2分で終わる短さ。それを5つ並べる。</p>
+  </div>
+
+  <h3>この章の考え方の芯</h3>
+  <div class="note"><b>3つ</b>
+    <p><strong>1. 攻撃判定はアニメーションが出す。</strong>「攻撃ボタンを押した瞬間に当たり判定を出す」ではなく、<strong>棒を振り切った瞬間に出す</strong>のが正しい見え方です。<a class="xref" data-ref="s7b" href="s7b.html">第8回</a>のメソッド呼び出しトラックを使うと、秒数をコードで数えずに済みます。</p>
+    <p><strong>2. 誰が誰にぶつかるかを、先に決める。</strong><a class="xref" data-ref="s19" href="s19.html">第19回</a>のレイヤーとマスクを、ここで初めて本格的に使います。プレイヤーの攻撃は敵にだけ当たり、敵の体はプレイヤーにだけ反応する。ここを設定してから作り始めると、後の混乱が消えます。</p>
+    <p><strong>3. ステージは複製して作る。</strong>5面をゼロから5回作るのではありません。1面を完成させ、それを複製して地形を描き替えます。<strong>1面目の作りが、そのまま5面分の作りになります。</strong>だから1面目は丁寧に作ってください。</p>
+  </div>
+
+  <h3>ノード構成（完成形）</h3>
+  <pre><code>level_1.tscn
+Level (Node2D)                   ← level.gd
+├─ Background (Sprite2D)
+├─ TileMapLayer                  ← 地形
+├─ Entities (Node2D)
+│  ├─ Player                     ← player.tscn を置いたもの
+│  ├─ Enemy × n                  ← enemy.tscn
+│  └─ Coin × n                   ← coin.tscn
+├─ Goal (Area2D)                 ← 関所
+├─ KillZone (Area2D)             ← 画面下の落下判定
+└─ HUD (CanvasLayer)
+   ├─ Hearts (HBoxContainer)
+   └─ CoinLabel (Label)
+
+player.tscn
+Player (CharacterBody2D)         ← player.gd
+├─ Sprite (Sprite2D)
+├─ CollisionShape2D
+├─ AttackPivot (Node2D)          ← 向きに合わせて反転させる
+│  └─ AttackArea (Area2D)
+│     └─ CollisionShape2D
+├─ AnimationPlayer
+└─ Camera2D
+
+enemy.tscn
+Enemy (CharacterBody2D)          ← enemy.gd
+├─ Sprite / CollisionShape2D
+├─ FloorCheck (RayCast2D)        ← 崖を検知して引き返す
+└─ TouchBox (Area2D) + CollisionShape2D
+
+coin.tscn
+Coin (Area2D)                    ← coin.gd
+├─ Sprite / CollisionShape2D
+└─ AnimationPlayer
+
+Autoload: GameState              ← 小判と体力をステージ間で持ち越す</code></pre>
+
+  <span class="stepnum">STEP 0</span>
+  <h3 class="st">プロジェクトと入力の設定</h3>
+
+  <table class="set">
+    <tr><th>場所</th><th>項目</th><th>値</th></tr>
+    <tr><td>表示 → ウィンドウ</td><td>Viewport Width / Height</td><td>320 / 180</td></tr>
+    <tr><td>表示 → ウィンドウ</td><td>Stretch → Mode / Aspect</td><td>viewport / keep</td></tr>
+    <tr><td>レンダリング → テクスチャ</td><td>Default Texture Filter</td><td>Nearest</td></tr>
+  </table>
+
+  <p>320×180は、ドット絵の横スクロールに扱いやすい大きさです。16×16のタイルが横に20枚並びます。</p>
+
+  <h3>インプットマップ</h3>
+  <p><strong>プロジェクト設定 → インプットマップ</strong>で、4つのアクションを自分で作ります。ここを飛ばすと、次のステップでエラーになります。</p>
+
+  <table class="set">
+    <tr><th>アクション名</th><th>割り当て</th></tr>
+    <tr><td><code>move_left</code></td><td>←キー、Aキー</td></tr>
+    <tr><td><code>move_right</code></td><td>→キー、Dキー</td></tr>
+    <tr><td><code>jump</code></td><td>スペース、Zキー</td></tr>
+    <tr><td><code>attack</code></td><td>Xキー</td></tr>
+  </table>
+
+  <h3>物理レイヤーの名前</h3>
+  <p><strong>プロジェクト設定 → レイヤー名 → 2D 物理</strong>で、番号に名前を付けます。番号のまま進めると必ず混乱します。</p>
+
+  <table class="set">
+    <tr><th>番号</th><th>名前</th></tr>
+    <tr><td>1</td><td>world</td></tr>
+    <tr><td>2</td><td>player</td></tr>
+    <tr><td>3</td><td>enemy</td></tr>
+    <tr><td>4</td><td>pickup</td></tr>
+  </table>
+
+  <span class="stepnum">STEP 1</span>
+  <h3 class="st">床の上で左右に動く</h3>
+
+  <p>まだ地形も重力も作りません。<strong>平らな床の上を左右に動くだけ</strong>にします。</p>
+
+  <p>新規シーンを作り、ルートを <code>CharacterBody2D</code>、名前を <code>Player</code> にして <code>player.tscn</code> で保存します。</p>
+
+  <table class="set">
+    <tr><th>ノード</th><th>型</th><th>設定</th></tr>
+    <tr><td>Player</td><td>CharacterBody2D</td><td>Collision → Layer「player」、Mask「world」</td></tr>
+    <tr><td>Sprite</td><td>Sprite2D または ColorRect</td><td>16×24 くらい</td></tr>
+    <tr><td>CollisionShape2D</td><td>—</td><td>RectangleShape2D、Size (12, 24)</td></tr>
+  </table>
+
+  <p>テスト用のシーン（あとで level_1.tscn になります）を作り、Player と、床代わりの <code>StaticBody2D</code>（Layer「world」）を置きます。</p>
+
+  <pre><code># player.gd
+
+extends CharacterBody2D
+
+const SPEED := 110.0
+
+
+func _physics_process(_delta: float) -> void:
+    var dir := Input.get_axis("move_left", "move_right")
+    velocity.x = dir * SPEED
+    move_and_slide()</code></pre>
+
+  <div class="note"><b><code>_process</code> ではなく <code>_physics_process</code></b><p>当たり判定のある動きは <code>_physics_process</code> に書きます。呼ばれる間隔が一定なので、パソコンの速さによって動きが変わりません。<strong>物理は physics、演出は process</strong> と覚えてください。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>左右キーで動く。床をすり抜けない。</p></div>
+
+  <span class="stepnum">STEP 2</span>
+  <h3 class="st">重力とジャンプ</h3>
+
+  <pre><code># player.gd を書き換える
+
+const SPEED := 110.0
+const JUMP  := -290.0
+
+
+func _physics_process(delta: float) -> void:
+    if not is_on_floor():
+        velocity += get_gravity() * delta
+
+    if Input.is_action_just_pressed("jump") and is_on_floor():
+        velocity.y = JUMP
+
+    var dir := Input.get_axis("move_left", "move_right")
+    velocity.x = dir * SPEED
+    move_and_slide()</code></pre>
+
+  <p><code>get_gravity()</code> は、プロジェクト設定の重力をそのまま返してくれます。数値を自分で書く必要はありません。</p>
+
+  <div class="note"><b>ジャンプの調整</b><p><code>JUMP</code> の値を変えると高さが、プロジェクト設定 → 物理 → 2D → <code>Default Gravity</code> を変えると落ち方が変わります。<strong>気持ちよさはこの2つの比率で決まります。</strong>重力を強め・ジャンプを高めにすると、キビキビした操作感になります。ゴエモンやカービィの手触りは、ここの調整で作られています。</p>
+  <p>最初は「高く飛べるが、落ちるのが遅い」になりがちです。重力を上げてみてください。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>ジャンプして着地する。空中でジャンプできない。落ちる速さに違和感がない。</p></div>
+
+  <span class="stepnum">STEP 3</span>
+  <h3 class="st">TileMapLayerで地形を作る</h3>
+
+  <p>床の StaticBody2D を消し、<code>TileMapLayer</code> に置き換えます。TileSetの作り方と地形（オートタイル）の設定は<a class="xref" data-ref="s7a" href="s7a.html">第7回</a>にまとめてあります。</p>
+
+  <ul>
+    <li>Level に <code>TileMapLayer</code> を追加</li>
+    <li>インスペクタの <code>Tile Set</code> で「新規 TileSet」を作る</li>
+    <li>下パネルの「TileSet」タブで、タイル画像をドラッグして追加</li>
+    <li>TileSet の <strong>物理レイヤー</strong>を1つ追加し、<code>Layer</code> を「world」にする</li>
+    <li>各タイルを選び、物理レイヤーのタブで<strong>当たり判定の形を描く</strong></li>
+  </ul>
+
+  <div class="note"><b>ここが一番の落とし穴</b><p>タイルを置いただけでは、地形は当たりません。<strong>TileSet の物理レイヤーに、タイルごとの当たり形を描く必要があります。</strong>四角いタイルなら、当たり判定を作るボタンを押せば矩形が自動で入ります。</p>
+  <p>すり抜けるときは、まずここを疑ってください。次にプレイヤーの Mask に「world」が入っているかです。</p></div>
+
+  <p>タイルは16×16で作ります。地面・壁・足場の3種類あれば1ステージ作れます。</p>
+
+  <div class="check"><b>ここで確認</b><p>描いた地形の上を歩ける。段差に登れる。壁で止まる。</p></div>
+
+  <span class="stepnum">STEP 4</span>
+  <h3 class="st">カメラを追従させる</h3>
+
+  <p>Player の子に <code>Camera2D</code> を追加するだけで、追従します。<strong>コードは要りません。</strong></p>
+
+  <table class="set">
+    <tr><th>設定</th><th>値</th><th>意味</th></tr>
+    <tr><td>Position Smoothing → Enabled</td><td>オン</td><td>カメラが少し遅れてついてくる</td></tr>
+    <tr><td>Position Smoothing → Speed</td><td>5 前後</td><td>大きいほど機敏</td></tr>
+    <tr><td>Limit → Left / Top</td><td>0 / 0</td><td>ステージの左上端</td></tr>
+    <tr><td>Limit → Right / Bottom</td><td>ステージの大きさ</td><td>これを越えて映さない</td></tr>
+  </table>
+
+  <div class="note"><b>Limit を必ず設定する</b><p>設定しないと、ステージの外側の何もない空間が映ります。<strong>Right はステージの横幅（タイル数 × 16）</strong>です。ステージごとに違うので、複製したあと必ず直してください。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>歩くと画面がついてくる。ステージの端まで行っても、外側の空白が映らない。</p></div>
+
+  <span class="stepnum">STEP 5</span>
+  <h3 class="st">棒を振って攻撃する</h3>
+
+  <p><strong><a class="xref" data-ref="s7b" href="s7b.html">第8回</a>のメソッド呼び出しトラックが、ここで効きます。</strong></p>
+
+  <table class="set">
+    <tr><th>ノード</th><th>型</th><th>設定</th></tr>
+    <tr><td>AttackPivot</td><td>Node2D</td><td>Position (0, -12)</td></tr>
+    <tr><td>AttackArea</td><td>Area2D</td><td>Layer なし、Mask「enemy」、Monitoring オフ</td></tr>
+    <tr><td>└ CollisionShape2D</td><td>—</td><td>RectangleShape2D (20, 16)、Position (14, 0)</td></tr>
+    <tr><td>AnimationPlayer</td><td>—</td><td><code>attack</code> を1本（0.3秒）</td></tr>
+  </table>
+
+  <p><code>attack</code> アニメーションには、Sprite の見た目の変化に加えて<strong>メソッド呼び出しトラック</strong>を2つ入れます。0.1秒の時点で <code>attack_on</code>、0.22秒の時点で <code>attack_off</code>。</p>
+
+  <pre><code># player.gd に追加
+
+var attacking := false
+
+@onready var anim: AnimationPlayer = $AnimationPlayer
+@onready var attack_pivot: Node2D = $AttackPivot
+@onready var attack_area: Area2D  = $AttackPivot/AttackArea
+
+
+func _ready() -> void:
+    attack_area.monitoring = false
+    attack_area.body_entered.connect(_on_attack_hit)
+
+
+# _physics_process の中、move_and_slide の前に追加
+    if Input.is_action_just_pressed("attack") and not attacking:
+        do_attack()
+    if dir != 0.0:
+        attack_pivot.scale.x = 1.0 if dir &gt; 0.0 else -1.0
+        $Sprite.flip_h = dir &lt; 0.0
+
+
+func do_attack() -> void:
+    attacking = true
+    anim.play("attack")
+    await anim.animation_finished
+    attacking = false
+
+
+# アニメーションから呼ばれる
+func attack_on() -> void:
+    attack_area.set_deferred("monitoring", true)
+
+
+func attack_off() -> void:
+    attack_area.set_deferred("monitoring", false)
+
+
+func _on_attack_hit(body: Node) -> void:
+    if body.has_method("take_damage"):
+        body.take_damage(1)</code></pre>
+
+  <div class="note"><b><code>set_deferred</code> を使う理由</b><p>当たり判定の有効・無効を、物理計算の最中に直接切り替えるとGodotに怒られます。<code>set_deferred</code> は「安全なタイミングで変えておいて」という指示です。<strong>Area2D の monitoring を切り替えるときは、これを付けると覚えてしまってよいです。</strong></p>
+  <p><code>has_method("take_damage")</code> で確かめてから呼んでいるのも要点です。こうしておくと、敵でも壺でも「take_damage を持っていれば壊せる」形になり、種類を増やすときにコードを直さずに済みます。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>攻撃ボタンで棒を振るアニメーションが再生される。向きを変えると振る向きも変わる。攻撃中に連打しても二重に始まらない。</p></div>
+
+  <span class="stepnum">STEP 6</span>
+  <h3 class="st">敵を作る</h3>
+
+  <p>新規シーン、ルートは <code>CharacterBody2D</code>、<code>enemy.tscn</code> で保存します。</p>
+
+  <table class="set">
+    <tr><th>ノード</th><th>型</th><th>設定</th></tr>
+    <tr><td>Enemy</td><td>CharacterBody2D</td><td>Layer「enemy」、Mask「world」</td></tr>
+    <tr><td>Sprite / CollisionShape2D</td><td>—</td><td>16×16 くらい</td></tr>
+    <tr><td>FloorCheck</td><td>RayCast2D</td><td>Position (-10, 0)、Target Position (0, 12)、Enabled オン</td></tr>
+    <tr><td>TouchBox</td><td>Area2D</td><td>Layer なし、Mask「player」</td></tr>
+    <tr><td>└ CollisionShape2D</td><td>—</td><td>本体と同じくらいの大きさ</td></tr>
+  </table>
+
+  <pre><code># enemy.gd
+
+extends CharacterBody2D
+
+const SPEED := 32.0
+
+var dir := -1.0
+
+@onready var floor_check: RayCast2D = $FloorCheck
+
+
+func _ready() -> void:
+    $TouchBox.body_entered.connect(_on_touch)
+
+
+func _physics_process(delta: float) -> void:
+    if not is_on_floor():
+        velocity += get_gravity() * delta
+
+    # 壁にぶつかった、または足元の先が崖なら引き返す
+    if is_on_wall() or not floor_check.is_colliding():
+        turn()
+
+    velocity.x = dir * SPEED
+    move_and_slide()
+
+
+func turn() -> void:
+    dir = -dir
+    floor_check.position.x = -floor_check.position.x
+    $Sprite.flip_h = dir &gt; 0.0
+
+
+func _on_touch(body: Node) -> void:
+    if body.has_method("take_damage"):
+        body.take_damage(1)
+
+
+func take_damage(_amount: int) -> void:
+    queue_free()</code></pre>
+
+  <div class="note"><b>崖を検知する仕組み</b><p><code>FloorCheck</code> は、進行方向の少し先で下に向けて出したセンサーです。<strong>そこに床が無ければ、この先は崖</strong>ということになります。引き返すときにセンサーの位置も左右反転させるのを忘れないでください。</p>
+  <p>これが無いと、敵はどんどん穴に落ちていきます。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>敵が左右に歩き、壁と崖で引き返す。攻撃すると消える。触れると（まだ何も起きなくてよいが）出力にエラーが出ない。</p></div>
+
+  <span class="stepnum">STEP 7</span>
+  <h3 class="st">体力と、やられたときのやり直し</h3>
+
+  <pre><code># player.gd に追加
+
+signal died
+signal health_changed(value: int)
+
+const MAX_HP := 3
+const INVINCIBLE_TIME := 1.2
+
+var hp := MAX_HP
+var invincible := false
+
+
+func take_damage(amount: int) -> void:
+    if invincible:
+        return
+    hp -= amount
+    health_changed.emit(hp)
+    if hp &lt;= 0:
+        died.emit()
+        return
+
+    invincible = true
+    velocity.y = -160.0          # 少しのけぞる
+    var t := create_tween().set_loops(6)
+    t.tween_property($Sprite, "modulate:a", 0.2, 0.1)
+    t.tween_property($Sprite, "modulate:a", 1.0, 0.1)
+    await get_tree().create_timer(INVINCIBLE_TIME).timeout
+    $Sprite.modulate.a = 1.0
+    invincible = false</code></pre>
+
+  <div class="note"><b>無敵時間は必ず入れる</b><p>敵に重なっている間、当たり判定は<strong>毎フレーム</strong>反応します。無敵時間が無いと、触れた瞬間に体力が3つとも消えます。<strong>「ダメージを受けたら少しの間は無敵」は、アクションゲームの必須部品です。</strong></p>
+  <p>点滅させるのは演出のためだけではありません。<strong>いま無敵であることをプレイヤーに伝える</strong>ための表示です。</p></div>
+
+  <p>Level 側です。<code>KillZone</code>（Area2D、Mask「player」）を画面の下、地形より低い位置に横長に置きます。</p>
+
+  <pre><code># level.gd
+
+extends Node2D
+
+@onready var player: CharacterBody2D = $Entities/Player
+
+
+func _ready() -> void:
+    player.died.connect(restart)
+    $KillZone.body_entered.connect(_on_kill_zone)
+
+
+func _on_kill_zone(body: Node) -> void:
+    if body == player:
+        restart()
+
+
+func restart() -> void:
+    await get_tree().create_timer(0.6).timeout
+    get_tree().reload_current_scene()</code></pre>
+
+  <p><code>reload_current_scene()</code> は、いまのシーンを読み込み直します。<strong>これだけでステージが最初の状態に戻ります。</strong>敵の位置も小判もすべて元通りです。</p>
+
+  <div class="check"><b>ここで確認</b><p>敵に触れると体力が減って点滅する。重なり続けても一気に減らない。3回で最初からやり直しになる。穴に落ちても同じ。</p></div>
+
+  <span class="stepnum">STEP 8</span>
+  <h3 class="st">小判を集めて、画面に出す</h3>
+
+  <p>新規シーン、ルートは <code>Area2D</code>、<code>coin.tscn</code> で保存します。</p>
+
+  <table class="set">
+    <tr><th>ノード</th><th>型</th><th>設定</th></tr>
+    <tr><td>Coin</td><td>Area2D</td><td>Layer なし、Mask「player」。<strong>グループ <code>coin</code> に入れる</strong></td></tr>
+    <tr><td>Sprite / CollisionShape2D</td><td>—</td><td>8×8 くらい</td></tr>
+    <tr><td>AnimationPlayer</td><td>—</td><td><code>idle</code>（ゆらゆら、Loop オン、Autoplay）</td></tr>
+  </table>
+
+  <pre><code># coin.gd
+
+extends Area2D
+
+signal collected
+
+
+func _ready() -> void:
+    body_entered.connect(_on_body_entered)
+
+
+func _on_body_entered(_body: Node) -> void:
+    collected.emit()
+    set_deferred("monitoring", false)
+    var t := create_tween()
+    t.tween_property(self, "position:y", position.y - 12.0, 0.25)
+    t.parallel().tween_property(self, "modulate:a", 0.0, 0.25)
+    await t.finished
+    queue_free()</code></pre>
+
+  <p>Mask を「player」だけにしてあるので、<code>_body</code> の中身を確かめる必要がありません。<strong>プレイヤー以外は最初から反応しない</strong>ようにレイヤーで決めているからです。これが<a class="xref" data-ref="s19" href="s19.html">第19回</a>の設定を先にやっておく効果です。</p>
+
+  <pre><code># level.gd に追加
+
+var coins := 0
+
+@onready var coin_label: Label = $HUD/CoinLabel
+
+
+# _ready に追加
+    for c in get_tree().get_nodes_in_group("coin"):
+        c.collected.connect(_on_coin)
+    player.health_changed.connect(_on_health_changed)
+    update_hud()
+
+
+func _on_coin() -> void:
+    coins += 1
+    update_hud()
+
+
+func _on_health_changed(hp: int) -> void:
+    for i in $HUD/Hearts.get_child_count():
+        $HUD/Hearts.get_child(i).visible = i &lt; hp
+
+
+func update_hud() -> void:
+    coin_label.text = "小判 %d" % coins</code></pre>
+
+  <div class="note"><b>グループで一括接続する</b><p>小判を1個ずつエディタで繋ぐのは現実的ではありません。<code>get_nodes_in_group("coin")</code> でまとめて取り、繰り返しで接続します。<strong>小判を何個置いてもコードは変わりません。</strong><a class="xref" data-ref="s19" href="s19.html">第19回</a>のグループが効く場面です。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>小判に触れると消えて、数が増える。ハートが体力に応じて減る。小判を追加で置いても、コードを直さずに動く。</p></div>
+
+  <span class="stepnum">STEP 9</span>
+  <h3 class="st">関所を作り、5ステージに増やす</h3>
+
+  <p>まず、ステージをまたいで小判を持ち越すための Autoload を作ります（<a class="xref" data-ref="s15" href="s15.html">第15回</a>）。</p>
+
+  <pre><code># game_state.gd
+# プロジェクト設定 → Autoload に GameState として登録する
+
+extends Node
+
+var coins := 0
+var stage := 1
+
+
+func reset() -> void:
+    coins = 0
+    stage = 1</code></pre>
+
+  <p>Level に <code>Goal</code>（Area2D、Mask「player」）をステージの終端に置きます。</p>
+
+  <pre><code># level.gd に追加
+
+@export var next_scene: PackedScene
+
+
+# _ready に追加
+    coins = GameState.coins
+    $Goal.body_entered.connect(_on_goal)
+    update_hud()
+
+
+func _on_goal(body: Node) -> void:
+    if body != player:
+        return
+    GameState.coins = coins
+    GameState.stage += 1
+    if next_scene:
+        get_tree().change_scene_to_packed(next_scene)
+
+
+# _on_coin を書き換え
+func _on_coin() -> void:
+    coins += 1
+    GameState.coins = coins
+    update_hud()</code></pre>
+
+  <div class="note"><b><code>reload_current_scene</code> と小判</b><p>やり直しでシーンを読み直すと、<code>_ready</code> で <code>GameState.coins</code> から復元されます。<strong>つまり、やり直しても小判は減りません。</strong>減らしたいなら、<code>restart()</code> の中で <code>GameState.coins</code> をステージ開始時の値に戻す処理を足します。どちらが好みかは遊んでみて決めてください。</p></div>
+
+  <h3>5ステージに増やす</h3>
+  <ul>
+    <li><code>level_1.tscn</code> をファイルシステムで右クリック →「複製」→ <code>level_2.tscn</code></li>
+    <li>TileMapLayer の地形を描き替える</li>
+    <li>敵と小判の位置を動かす</li>
+    <li><strong>Camera2D の Limit → Right を、新しいステージの横幅に直す</strong></li>
+    <li>Level の <code>Next Scene</code> に <code>level_3.tscn</code> を割り当てる</li>
+    <li>5面目の <code>Next Scene</code> は空にするか、クリア画面を作る</li>
+  </ul>
+
+  <div class="note"><b>1面目を丁寧に作る理由</b><p>2面目以降は、この複製作業の繰り返しになります。<strong>1面目に入れ忘れた仕組みは、5面分すべてに入りません。</strong>複製を始める前に、1面目が完全に遊べる状態になっているかを確認してください。</p></div>
+
+  <div class="try"><b>完成の目安</b><p>1ステージをスタートからゴールまで通せる。敵を倒せる。小判が集まる。やられたらやり直せる。関所に触れると次のステージへ進む。<strong>ここまでできたら、あとは面を増やすだけです。</strong></p></div>
+
+  <h3>余裕ができたら足す機能</h3>
+  <p>ここから先は作らなくても完成です。上から順に、だいたい簡単な順です。「プロンプトをコピー」を押すと、このゲームの内容とコードの作りまで入った質問文がコピーされます。</p>
+
+  <div class="idea"><span class="lv">やさしい</span>
+    <h4>コヨーテタイムを入れる</h4>
+    <p>足場から落ちた直後の数フレームだけ、まだジャンプできる。プロの2Dアクションはほぼ全部これを入れています。<strong>操作感が劇的に良くなります。</strong></p>
+    <button class="askbtn" data-ask="足場から落ちた直後の短い間だけジャンプを受け付ける「コヨーテタイム」と、着地の少し前にジャンプを押しても受け付ける「先行入力」を入れたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">やさしい</span>
+    <h4>背景を多重スクロールにする</h4>
+    <p>遠くの山はゆっくり、近くの木は速く流れる。奥行きが出て、一気にそれらしくなります。</p>
+    <button class="askbtn" data-ask="背景を多重スクロール（パララックス）にして、遠くの景色がゆっくり、近くの景色が速く流れるようにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">やさしい</span>
+    <h4>チェックポイント</h4>
+    <p>ステージの中ほどに旗を置き、やられたらそこから再開する。1面が長くなってきたら必要になります。</p>
+    <button class="askbtn" data-ask="ステージの中ほどにチェックポイントの旗を置いて、やられたらそこから再開できるようにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">ふつう</span>
+    <h4>小判を投げる遠距離攻撃</h4>
+    <p>近接だけでなく、小判を投げて遠くの敵を倒せるようにする。飛び道具の作り方を覚えられます。</p>
+    <button class="askbtn" data-ask="近接攻撃に加えて、小判を投げる遠距離攻撃を足したいです。投げた小判は飛んでいって敵に当たると消えるようにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">ふつう</span>
+    <h4>敵の種類を増やす</h4>
+    <p>飛ぶ敵、突っ込んでくる敵、踏まないと倒せない敵。いまの enemy.gd を元にすると、2種類目からは早く作れます。</p>
+    <button class="askbtn" data-ask="いまの歩く敵に加えて、上下に飛ぶ敵と、プレイヤーを見つけると突進してくる敵を足したいです。既存の enemy.gd をどう分けるのがよいかも知りたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">ふつう</span>
+    <h4>ステージクリアの演出</h4>
+    <p>関所に触れたら操作を止めて、集めた小判を数え上げてから次へ。区切りがつくと達成感が出ます。</p>
+    <button class="askbtn" data-ask="関所に触れたときに操作を止めて、集めた小判を数え上げる演出を出してから次のステージへ進むようにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">むずかしい</span>
+    <h4>ボスを作る</h4>
+    <p>5面の最後に、何回か攻撃しないと倒せない敵を置く。行動のパターンを持たせるので、状態管理の練習になります。</p>
+    <button class="askbtn" data-ask="ステージの最後にボスを置きたいです。体力があって、いくつかの行動パターンを順番に繰り返す敵の作り方を知りたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">むずかしい</span>
+    <h4>隠し部屋</h4>
+    <p>壁の一部が抜けられて、小判がたくさんある部屋に入れる。探索の楽しみが加わります。</p>
+    <button class="askbtn" data-ask="壁の一部をすり抜けられる隠し部屋を作りたいです。入ると壁が透けて中が見えるようにもしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">むずかしい</span>
+    <h4>セーブして続きから</h4>
+    <p>どのステージまで進んだかを保存し、次に起動したとき続きから遊べる。B6でも必要になる知識です。</p>
+    <button class="askbtn" data-ask="どのステージまで進んだかと集めた小判を保存して、次に起動したとき続きから遊べるようにしたいです。Godot 4でのセーブとロードの基本から知りたいです。">プロンプトをコピー</button>
+  </div>
+
+  <template id="ctx-p5">私はGodot 4でゲームを作っている初心者です。いま和風の横スクロールアクションを作っています。スーパーファミコンの「がんばれゴエモン」のような雰囲気で、規模はゲームボーイの「星のカービィ」くらい（全5ステージ、1面1〜2分）を目指しています。
+
+【ゲームの内容】
+・主人公は走る・ジャンプ・棒を振って近接攻撃ができる
+・敵に触れると体力が1減る。体力は3。0になるとステージの最初からやり直し
+・穴に落ちても同じ
+・道中に小判が置いてあり、集めると数が増える
+・ステージの終わりに関所（ゴール）があり、触れると次のステージへ
+
+【画面設定】
+・解像度 320×180、Stretch Mode は viewport、Aspect は keep、タイルは16×16
+
+【物理レイヤー】
+1: world / 2: player / 3: enemy / 4: pickup
+
+【シーン構成】
+level_1.tscn : Level (Node2D) ← level.gd
+├─ Background / TileMapLayer
+├─ Entities ├─ Player ├─ Enemy×n ├─ Coin×n
+├─ Goal (Area2D) / KillZone (Area2D)
+└─ HUD (CanvasLayer) ├─ Hearts (HBoxContainer) ├─ CoinLabel
+player.tscn : Player (CharacterBody2D) ← player.gd
+├─ Sprite / CollisionShape2D
+├─ AttackPivot (Node2D) └─ AttackArea (Area2D)
+├─ AnimationPlayer / Camera2D
+enemy.tscn : Enemy (CharacterBody2D) ← enemy.gd
+├─ Sprite / CollisionShape2D / FloorCheck (RayCast2D) / TouchBox (Area2D)
+coin.tscn : Coin (Area2D) ← coin.gd
+Autoload: GameState（coins, stage）
+
+【いまのコードの作り】
+・player.gd は _physics_process で get_gravity() を使い、Input.get_axis で左右移動、move_and_slide()
+・攻撃は AnimationPlayer の "attack" を再生し、メソッド呼び出しトラックから attack_on / attack_off を呼んで
+  AttackArea の monitoring を set_deferred で切り替えている
+・当たった相手に has_method("take_damage") を確かめてから take_damage(1) を呼ぶ
+・ダメージ時は invincible フラグと Tween の点滅で無敵時間を作っている
+・敵は FloorCheck という RayCast2D で崖を検知して引き返す
+・小判はグループ "coin" に入れ、level.gd が get_nodes_in_group で一括接続している
+・やり直しは get_tree().reload_current_scene()
+・ステージ移動は change_scene_to_packed(next_scene)、小判は Autoload の GameState で持ち越す
+
+【やりたいこと】
+</template>
+
+  <h3>player.gd 全文</h3>
+
+  <pre><code># player.gd
+
+extends CharacterBody2D
+
+signal died
+signal health_changed(value: int)
+
+const SPEED := 110.0
+const JUMP  := -290.0
+const MAX_HP := 3
+const INVINCIBLE_TIME := 1.2
+
+var hp := MAX_HP
+var attacking := false
+var invincible := false
+
+@onready var anim: AnimationPlayer = $AnimationPlayer
+@onready var sprite: Sprite2D     = $Sprite
+@onready var attack_pivot: Node2D = $AttackPivot
+@onready var attack_area: Area2D  = $AttackPivot/AttackArea
+
+
+func _ready() -> void:
+    attack_area.monitoring = false
+    attack_area.body_entered.connect(_on_attack_hit)
+
+
+func _physics_process(delta: float) -> void:
+    if not is_on_floor():
+        velocity += get_gravity() * delta
+
+    if Input.is_action_just_pressed("jump") and is_on_floor():
+        velocity.y = JUMP
+
+    if Input.is_action_just_pressed("attack") and not attacking:
+        do_attack()
+
+    var dir := Input.get_axis("move_left", "move_right")
+    if attacking:
+        dir = 0.0                       # 攻撃中は足を止める
+    velocity.x = dir * SPEED
+
+    if dir != 0.0:
+        sprite.flip_h = dir &lt; 0.0
+        attack_pivot.scale.x = 1.0 if dir &gt; 0.0 else -1.0
+
+    move_and_slide()
+
+
+# ---- 攻撃 ----
+func do_attack() -> void:
+    attacking = true
+    anim.play("attack")
+    await anim.animation_finished
+    attacking = false
+
+
+func attack_on() -> void:               # アニメーションから呼ばれる
+    attack_area.set_deferred("monitoring", true)
+
+
+func attack_off() -> void:              # アニメーションから呼ばれる
+    attack_area.set_deferred("monitoring", false)
+
+
+func _on_attack_hit(body: Node) -> void:
+    if body.has_method("take_damage"):
+        body.take_damage(1)
+
+
+# ---- ダメージ ----
+func take_damage(amount: int) -> void:
+    if invincible:
+        return
+    hp -= amount
+    health_changed.emit(hp)
+    if hp &lt;= 0:
+        died.emit()
+        return
+
+    invincible = true
+    velocity.y = -160.0
+    var t := create_tween().set_loops(6)
+    t.tween_property(sprite, "modulate:a", 0.2, 0.1)
+    t.tween_property(sprite, "modulate:a", 1.0, 0.1)
+    await get_tree().create_timer(INVINCIBLE_TIME).timeout
+    sprite.modulate.a = 1.0
+    invincible = false</code></pre>
+
+  <h3>enemy.gd 全文</h3>
+
+  <pre><code># enemy.gd
+
+extends CharacterBody2D
+
+const SPEED := 32.0
+
+var dir := -1.0
+
+@onready var floor_check: RayCast2D = $FloorCheck
+
+
+func _ready() -> void:
+    $TouchBox.body_entered.connect(_on_touch)
+
+
+func _physics_process(delta: float) -> void:
+    if not is_on_floor():
+        velocity += get_gravity() * delta
+
+    if is_on_wall() or not floor_check.is_colliding():
+        turn()
+
+    velocity.x = dir * SPEED
+    move_and_slide()
+
+
+func turn() -> void:
+    dir = -dir
+    floor_check.position.x = -floor_check.position.x
+    $Sprite.flip_h = dir &gt; 0.0
+
+
+func _on_touch(body: Node) -> void:
+    if body.has_method("take_damage"):
+        body.take_damage(1)
+
+
+func take_damage(_amount: int) -> void:
+    queue_free()</code></pre>
+
+  <h3>level.gd 全文</h3>
+
+  <pre><code># level.gd
+
+extends Node2D
+
+@export var next_scene: PackedScene
+
+var coins := 0
+
+@onready var player: CharacterBody2D = $Entities/Player
+@onready var coin_label: Label = $HUD/CoinLabel
+
+
+func _ready() -> void:
+    coins = GameState.coins
+
+    player.died.connect(restart)
+    player.health_changed.connect(_on_health_changed)
+    $KillZone.body_entered.connect(_on_kill_zone)
+    $Goal.body_entered.connect(_on_goal)
+
+    for c in get_tree().get_nodes_in_group("coin"):
+        c.collected.connect(_on_coin)
+
+    _on_health_changed(player.hp)
+    update_hud()
+
+
+# ---- 小判 ----
+func _on_coin() -> void:
+    coins += 1
+    GameState.coins = coins
+    update_hud()
+
+
+# ---- やられた ----
+func _on_kill_zone(body: Node) -> void:
+    if body == player:
+        restart()
+
+
+func restart() -> void:
+    await get_tree().create_timer(0.6).timeout
+    get_tree().reload_current_scene()
+
+
+# ---- ゴール ----
+func _on_goal(body: Node) -> void:
+    if body != player:
+        return
+    GameState.coins = coins
+    GameState.stage += 1
+    if next_scene:
+        get_tree().change_scene_to_packed(next_scene)
+
+
+# ---- 表示 ----
+func _on_health_changed(hp: int) -> void:
+    for i in $HUD/Hearts.get_child_count():
+        $HUD/Hearts.get_child(i).visible = i &lt; hp
+
+
+func update_hud() -> void:
+    coin_label.text = "小判 %d" % coins</code></pre>
+
+  <h3>詰まったときの確認手順</h3>
+  <table>
+    <tr><th>症状</th><th>見るところ</th></tr>
+    <tr><td>地形をすり抜ける</td><td>TileSet の物理レイヤーに当たり形を描いたか。Player の Mask に world があるか</td></tr>
+    <tr><td>入力アクションが無いというエラー</td><td>インプットマップに4つ作ったか。名前が一致しているか</td></tr>
+    <tr><td>ジャンプが変な感じ</td><td><code>JUMP</code> と Default Gravity の比率。まず重力を上げてみる</td></tr>
+    <tr><td>ステージ外の空白が映る</td><td>Camera2D の Limit。複製したステージで直し忘れていないか</td></tr>
+    <tr><td>攻撃が当たらない</td><td>AttackArea の Mask に enemy があるか。メソッド呼び出しトラックが動いているか</td></tr>
+    <tr><td>monitoring の警告が出る</td><td><code>set_deferred</code> を使っているか</td></tr>
+    <tr><td>触れた瞬間に体力が全部減る</td><td>無敵時間の <code>invincible</code> を最初に確認しているか</td></tr>
+    <tr><td>敵が穴に落ちる</td><td>FloorCheck の Target Position と、turn() での左右反転</td></tr>
+    <tr><td>小判の数が増えない</td><td>グループ <code>coin</code> に入れたか。Mask に player があるか</td></tr>
+    <tr><td>次のステージへ行かない</td><td>Level の <code>Next Scene</code> を割り当てたか</td></tr>
+  </table>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

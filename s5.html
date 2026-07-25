@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>06 res:// とファイルの置き方 — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s5">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第1部 GODOTの地図／res:// とファイルの置き方</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s5" data-title="res:// とファイルの置き方">
+  <p class="eyebrow">第1部 GODOTの地図 · <b class="lno"></b> · 15分</p>
+  <h2>res:// とファイルの置き方</h2>
+  <p class="aim">この回のねらい：後で迷子にならないフォルダ構成を決める。</p>
+
+  <p>Godotの中でのパスは <code>res://</code> から始まります。これはプロジェクトフォルダの一番上を指します。<code>res://scenes/player.tscn</code> なら、プロジェクト直下の scenes フォルダの中のファイルです。</p>
+
+  <div class="note"><b>絶対にやらないこと</b><p>ファイルの移動やリネームを、OSのエクスプローラー／Finderでやること。Godotは参照が切れて壊れます。<strong>必ずエディタのファイルシステムドックの中で操作</strong>してください。ドック内で動かせば、参照は自動で追従します。</p></div>
+
+  <h3>おすすめの構成</h3>
+  <pre><code>res://
+├─ scenes/     .tscn（player, enemy, level...）
+├─ scripts/    .gd（シーンに属さない共通処理）
+├─ assets/
+│  ├─ sprites/
+│  ├─ audio/
+│  └─ fonts/
+└─ autoload/   全体で使う常駐スクリプト</code></pre>
+
+  <p>もう1つの流儀として「機能ごとにフォルダを作り、<code>player.tscn</code> と <code>player.gd</code> とスプライトを同じ場所に置く」やり方もあります。規模が大きくなるほどこちらが強いです。どちらでも構いませんが、<strong>途中で混ぜない</strong>ことだけ守ってください。</p>
+
+  <div class="try"><b>やってみる</b><p>ファイルシステムドックで scenes / assets フォルダを作り、既存の <code>player.tscn</code> を scenes へドラッグ移動する。エラーが出ないことを確認する。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

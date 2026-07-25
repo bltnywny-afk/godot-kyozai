@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>23 解像度とピクセルアート — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s18">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第4部 画面を作る／解像度とピクセルアート</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s18" data-title="解像度とピクセルアート">
+  <p class="eyebrow">第4部 画面を作る · <b class="lno"></b> · 15分</p>
+  <h2>解像度とピクセルアートの設定</h2>
+  <p class="aim">この回のねらい：ドットをぼやけさせない。</p>
+
+  <p>ピクセルアートで最初にやる設定が3つあります。<strong>プロジェクト設定</strong>で行います。</p>
+
+  <h3>1. 内部解像度を決める</h3>
+  <p><strong>表示 → ウィンドウ</strong> の <code>Viewport Width / Height</code> に、ドット単位の実寸を入れます。Game Boy風なら 160×144。ここは<strong>拡大後のサイズではなく、絵の実寸</strong>を入れるのがコツです。</p>
+
+  <h3>2. 引き伸ばし方を決める</h3>
+  <p>同じ画面の下のほうにある <code>Stretch</code> で設定します。</p>
+  <ul>
+    <li><code>Mode</code> → <strong>viewport</strong>（小さく描いてから拡大。ドット感が保たれる）</li>
+    <li><code>Aspect</code> → <strong>keep</strong>（縦横比を保ち、余りは黒帯にする）</li>
+  </ul>
+
+  <h3>3. 補間を切る</h3>
+  <p><strong>レンダリング → テクスチャ</strong> の <code>Default Texture Filter</code> を <strong>Nearest</strong> にします。これが <code>Linear</code> のままだと、拡大時にドットの境界がにじみます。</p>
+
+  <div class="note"><b>個別に切りたいとき</b><p>プロジェクト全体ではなく1つのノードだけ変えたい場合は、そのノードのインスペクタで <code>CanvasItem → Texture → Filter</code> を <code>Nearest</code> に変えます。</p></div>
+
+  <p>この3つを最初にやっておくと、以降ずっと悩まずに済みます。プロジェクトを新規作成した直後にまとめて設定する習慣にしてください。</p>
+
+  <div class="try"><b>やってみる</b><p><a class="xref" data-ref="s7" href="s7.html">第7回</a>でぼやけていたスプライトを、Default Texture Filter を Nearest にして直す。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>B2 風船 — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="p2">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第6部 実践 — 9本を作る／風船</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="p2" data-kind="build" data-title="風船" data-file="main.gd">
+  <p class="eyebrow">実践 B2 · 全8ステップ · 規模：3〜4日</p>
+  <h2>風船をふくらませて放す</h2>
+  <p class="aim">新しく覚える：シーンを分けて生成・破棄する／毎フレーム少しずつ変える／sin で揺らす／ランダムを使う。</p>
+
+  <h3>作るものを先に決める</h3>
+  <div class="spec">
+    <p><strong>幼児向けの、安心して繰り返せる風船遊び。</strong></p>
+    <p>画面の下のほうに、しぼんだ風船がひとつ浮かんでいる。画面を押している間、風船はゆっくり大きくなる。指を離すと、ゆらゆらと横に揺れながら空へ上がっていき、画面の上へ消える。少し待つと、次の風船が出てくる。</p>
+    <p>風船の色は毎回変わる。空にはゆっくり雲が流れ、ときどき鳥が横切る。</p>
+    <p><strong>割れない。記録もつかない。失敗という状態が存在しない。</strong>大きくしすぎても、上限で止まるだけです。</p>
+  </div>
+
+  <div class="note"><b>なぜ割らないのか</b><p>「膨らませすぎると割れる」は、大人には駆け引きになりますが、幼児には<strong>理不尽な罰</strong>になります。押していたら急に消えた、という体験は繰り返しを止めてしまいます。上限で止める設計にすると、思い切り押していい遊びになります。</p></div>
+
+  <h3>この章の考え方の芯</h3>
+  <div class="note"><b>2つだけ</b>
+    <p><strong>1. 風船は自分のことだけを知っている。</strong>どう膨らむか、どう上がるか、いつ消えるかは、すべて風船自身が持ちます。Main がやるのは「作る」ことと「押されたと伝える」ことだけ。<a class="xref" data-ref="s13" href="s13.html">第13回</a>の向きのルールを、初めて2つのシーンにまたがって使います。</p>
+    <p><strong>2. 変化は毎フレーム少しずつ。</strong>B1では速度を扱いましたが、今回は大きさと位置を <code>delta</code> で少しずつ動かします。「今この瞬間どうなっているか」ではなく「1秒あたりどれだけ変わるか」を書く、という考え方に慣れてください。以降の全部の章で使います。</p>
+  </div>
+
+  <h3>ノード構成（完成形）</h3>
+  <p>今回は<strong>シーンが2つ</strong>になります。風船を別ファイルにするのがこの章の要点です。</p>
+
+  <pre><code>main.tscn
+Main (Node2D)                  ← main.gd
+├─ Sky (ColorRect)
+├─ Clouds (Node2D)             ← 雲をまとめる
+│  ├─ Cloud1 (Sprite2D)
+│  ├─ Cloud2
+│  └─ Cloud3
+├─ Ground (ColorRect)
+├─ Balloons (Node2D)           ← 生まれた風船が入る場所
+├─ Birds (Node2D)
+├─ BirdTimer (Timer)
+└─ Pop (AudioStreamPlayer)
+
+balloon.tscn
+Balloon (Node2D)               ← balloon.gd
+├─ Body (Sprite2D)
+└─ String (ColorRect)          ← ひも
+
+bird.tscn
+Bird (Node2D)                  ← bird.gd
+└─ Body (Sprite2D)</code></pre>
+
+  <div class="note"><b>Balloons という空のノード</b><p>生まれた風船を <code>Main</code> の直下ではなく <code>Balloons</code> の下に入れます。こうしておくと、実行中に<strong>リモートツリー</strong>（<a class="xref" data-ref="s20" href="s20.html">第20回</a>）を開いたとき、いま風船が何個あるかが一目で分かります。消し忘れているかどうかを、そこで確認できます。</p></div>
+
+  <span class="stepnum">STEP 0</span>
+  <h3 class="st">プロジェクトの用意</h3>
+
+  <p>B1と同じ設定で構いません。新しいプロジェクトを作り、以下を設定します。</p>
+
+  <table class="set">
+    <tr><th>場所</th><th>項目</th><th>値</th></tr>
+    <tr><td>表示 → ウィンドウ</td><td>Viewport Width / Height</td><td>320 / 480</td></tr>
+    <tr><td>表示 → ウィンドウ</td><td>Stretch → Mode / Aspect</td><td>viewport / keep</td></tr>
+    <tr><td>レンダリング → テクスチャ</td><td>Default Texture Filter</td><td>Nearest</td></tr>
+  </table>
+
+  <p>入力の設定は要りません。<strong>タッチはマウスとして届きます</strong>（入力デバイス → ポインティング → Emulate Mouse From Touch が既定でオン）。パソコンでクリックして作れば、そのままタブレットでも動きます。</p>
+
+  <p>絵はまだ描かなくて大丈夫です。B1と同じく、まずは ColorRect で作ります。風船は丸くなくても構いません。</p>
+
+  <span class="stepnum">STEP 1</span>
+  <h3 class="st">空と雲を流す</h3>
+
+  <p>B1の背景スクロールの応用です。今回は<strong>1枚ずつ独立して</strong>流し、左へ抜けたら右から出し直します。</p>
+
+  <table class="set">
+    <tr><th>ノード</th><th>型</th><th>設定</th></tr>
+    <tr><td>Main</td><td>Node2D</td><td>main.gd をアタッチ</td></tr>
+    <tr><td>Sky</td><td>ColorRect</td><td>Size (320, 480)、水色</td></tr>
+    <tr><td>Clouds</td><td>Node2D</td><td>Position (0, 0)</td></tr>
+    <tr><td>Cloud1〜3</td><td>ColorRect</td><td>Size (56, 20)、白、y は 40／90／150 あたりに散らす</td></tr>
+    <tr><td>Ground</td><td>ColorRect</td><td>Size (320, 60)、Position (0, 420)、緑</td></tr>
+  </table>
+
+  <pre><code># main.gd
+
+extends Node2D
+
+const CLOUD_SPEED := 8.0     # 雲が流れる速さ（px/秒）
+
+@onready var clouds: Node2D = $Clouds
+
+
+func _process(delta: float) -> void:
+    for c in clouds.get_children():
+        c.position.x -= CLOUD_SPEED * delta
+        if c.position.x &lt; -80.0:
+            c.position.x = 340.0
+            c.position.y = randf_range(30.0, 170.0)</code></pre>
+
+  <p>右から出し直すときに <code>y</code> をランダムに変えているので、同じ並びが繰り返されません。<code>randf_range</code> は「この範囲の小数をひとつ選ぶ」関数です。</p>
+
+  <div class="check"><b>ここで確認</b><p>雲が3つ、ゆっくり左へ流れる。左端で消えて右から戻ってくるとき、高さが毎回変わっている。</p></div>
+
+  <span class="stepnum">STEP 2</span>
+  <h3 class="st">風船シーンを単体で作る</h3>
+
+  <p>ここが今回の分かれ目です。<strong>Main には手を入れず、風船だけを別のシーンとして作ります。</strong></p>
+
+  <p>シーンドックで「+」から新規シーンを作り、ルートを <code>Node2D</code>、名前を <code>Balloon</code> にして <code>balloon.tscn</code> として保存します。</p>
+
+  <table class="set">
+    <tr><th>ノード</th><th>型</th><th>設定</th></tr>
+    <tr><td>Balloon</td><td>Node2D</td><td>balloon.gd をアタッチ</td></tr>
+    <tr><td>Body</td><td>ColorRect</td><td>Size (30, 36)、Position (-15, -36)</td></tr>
+    <tr><td>String</td><td>ColorRect</td><td>Size (2, 22)、Position (-1, 0)、暗い色</td></tr>
+  </table>
+
+  <div class="note"><b>原点をどこに置くか</b><p>Balloon の原点（0, 0）が<strong>ひもの下端</strong>に来るように子を配置しています。だから Body の Position が負の値になっています。こうしておくと、大きくしたときに下端が動かず、下から膨らむように見えます。原点の位置は、後から直すと全部ずれます。最初に決めてください。</p></div>
+
+  <pre><code># balloon.gd
+
+extends Node2D
+
+var size := 0.6
+
+
+func _ready() -> void:
+    scale = Vector2.ONE * size</code></pre>
+
+  <p>この状態で <strong>F6</strong> を押してください。風船だけの画面が立ち上がります。<a class="xref" data-ref="s12" href="s12.html">第12回</a>で触れた「部品を単体で試す」を、ここで実際に使います。</p>
+
+  <div class="check"><b>ここで確認</b><p>F6で、小さい風船がひとつだけ表示される。Main のシーンは一切変えていない。</p></div>
+
+  <span class="stepnum">STEP 3</span>
+  <h3 class="st">押している間ふくらむ</h3>
+
+  <p>押している間だけ大きくなり、上限で止まります。まだ Main とはつながず、風船シーン単体で動かします。</p>
+
+  <pre><code># balloon.gd に追加
+
+const GROW_SPEED := 1.1      # 1秒あたりどれだけ大きくなるか
+const MAX_SIZE   := 3.2      # これ以上は大きくならない
+
+var holding := false
+
+
+func _process(delta: float) -> void:
+    if not holding:
+        return
+    size = min(size + GROW_SPEED * delta, MAX_SIZE)
+    scale = Vector2.ONE * size
+
+
+func hold() -> void:
+    holding = true
+
+
+func release() -> void:
+    holding = false</code></pre>
+
+  <p><code>min()</code> は「小さいほうを返す」関数です。<code>size + 増加分</code> と <code>MAX_SIZE</code> を比べて小さいほうを採用するので、<strong>これだけで上限が作れます</strong>。<code>if</code> を書く必要はありません。</p>
+
+  <p>単体で確かめるために、一時的にこれを足します（あとで消します）。</p>
+
+  <pre><code># balloon.gd に一時的に追加（STEP 5 で消す）
+
+func _input(event: InputEvent) -> void:
+    if event is InputEventMouseButton:
+        if event.pressed:
+            hold()
+        else:
+            release()</code></pre>
+
+  <div class="check"><b>ここで確認</b><p>F6で風船だけを実行し、押しっぱなしにすると大きくなる。離すと止まる。押し続けても、あるところで大きくなるのが止まる。</p></div>
+
+  <span class="stepnum">STEP 4</span>
+  <h3 class="st">放すと、ゆらゆら上がって消える</h3>
+
+  <p>風船に「いま何をしているか」を持たせます。B1の <code>enum</code> と同じ考え方です。</p>
+
+  <pre><code># balloon.gd に追加（_process を書き換える）
+
+enum Phase { GROWING, FLYING }
+
+const RISE_SPEED := 90.0     # 上がる速さ（px/秒）
+const SWAY_WIDTH := 26.0     # 横揺れの幅（px）
+const SWAY_SPEED := 2.2      # 横揺れの速さ
+
+var phase: Phase = Phase.GROWING
+var t := 0.0                 # 揺れのための経過時間
+var base_x := 0.0            # 揺れの中心になる x
+
+
+func _process(delta: float) -> void:
+    if phase == Phase.GROWING:
+        if holding:
+            size = min(size + GROW_SPEED * delta, MAX_SIZE)
+            scale = Vector2.ONE * size
+    else:
+        t += delta
+        position.y -= RISE_SPEED * delta
+        position.x = base_x + sin(t * SWAY_SPEED) * SWAY_WIDTH
+        rotation = sin(t * SWAY_SPEED) * 0.14
+        if position.y &lt; -100.0:
+            queue_free()
+
+
+func release() -> void:
+    if phase != Phase.GROWING:
+        return
+    holding = false
+    phase = Phase.FLYING
+    base_x = position.x
+    t = 0.0</code></pre>
+
+  <div class="note"><b>sin で揺らす</b><p><code>sin()</code> は、入れた数値を増やしていくと <strong>-1 と 1 の間を往復する</strong>値を返します。だから <code>sin(経過時間) × 幅</code> を x に足すと、左右に揺れます。</p>
+  <p><code>SWAY_SPEED</code> を大きくすると速く揺れ、<code>SWAY_WIDTH</code> を大きくすると大きく揺れます。回転にも同じ値を使っているので、傾きと横移動が揃って自然に見えます。<strong>揺れの表現はほぼこれ一つで作れます</strong>ので、覚えておくと後の章でも使えます。</p></div>
+
+  <p><code>base_x</code> を放した瞬間に記録しているのが要点です。これがないと、揺れの中心が0（画面左端）になってしまいます。</p>
+
+  <div class="check"><b>ここで確認</b><p>F6で、押して膨らませて離すと、左右に揺れながら上へ上がっていき、画面の上で消える。下パネルの「出力」にエラーが出ていない。</p></div>
+
+  <span class="stepnum">STEP 5</span>
+  <h3 class="st">次の風船が出てくる</h3>
+
+  <p>ここで Main とつなぎます。<strong>風船は「放されました」と言うだけ</strong>で、次を出すのは Main の仕事です。</p>
+
+  <p>まず、STEP 3 で一時的に足した <code>_input</code> を <code>balloon.gd</code> から<strong>削除</strong>してください。入力を受けるのは Main の役目です。</p>
+
+  <pre><code># balloon.gd に追加
+
+signal released
+
+
+# release() の最後に1行足す
+    released.emit()</code></pre>
+
+  <p>Main 側です。インスペクタで <code>Balloon Scene</code> に <code>balloon.tscn</code> をドラッグして割り当ててください。</p>
+
+  <pre><code># main.gd に追加
+
+const SPAWN_X := 160.0
+const SPAWN_Y := 400.0
+
+@export var balloon_scene: PackedScene
+
+var current: Node2D = null
+
+@onready var balloons: Node2D = $Balloons
+
+
+func _ready() -> void:
+    spawn_balloon()
+
+
+func spawn_balloon() -> void:
+    var b := balloon_scene.instantiate()
+    b.position = Vector2(SPAWN_X, SPAWN_Y)
+    b.released.connect(_on_balloon_released)
+    balloons.add_child(b)
+    current = b
+
+
+func _input(event: InputEvent) -> void:
+    if current == null:
+        return
+    if event is InputEventMouseButton:
+        if event.pressed:
+            current.hold()
+        else:
+            current.release()
+
+
+func _on_balloon_released() -> void:
+    current = null
+    await get_tree().create_timer(0.7).timeout
+    spawn_balloon()</code></pre>
+
+  <div class="note"><b><code>current</code> が null になる意味</b><p>放した瞬間に <code>current = null</code> にすることで、飛んでいる風船を間違って操作しなくなります。次の風船が出るまでの0.7秒は、押しても何も起きません。<strong>「いま操作できる対象はどれか」を1つの変数で持つ</strong>のは、この先も繰り返し出てくる形です。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>F5で main.tscn を実行。押して離すと風船が飛び、少し待つと次の風船が下に現れる。これを何度でも繰り返せる。<strong>リモートツリーで <code>Balloons</code> を開き、風船が溜まっていないこと</strong>を必ず確認してください。</p></div>
+
+  <span class="stepnum">STEP 6</span>
+  <h3 class="st">色が毎回変わる</h3>
+
+  <p>色は Main が決めて、生まれた風船に渡します。</p>
+
+  <pre><code># main.gd に追加
+
+const COLORS := [
+    Color("ff6b6b"), Color("ffd166"), Color("06d6a0"),
+    Color("4cc9f0"), Color("c77dff"), Color("ffadad"),
+]
+
+
+# spawn_balloon の中に1行足す
+    b.modulate = COLORS.pick_random()</code></pre>
+
+  <p><code>modulate</code> はそのノードと<strong>子ども全部</strong>に色をかける仕組みです。風船本体もひもも一緒に染まります。ひもだけ色を変えたくなったら、Body にだけ <code>modulate</code> をかける形に直します。</p>
+
+  <p><code>pick_random()</code> は配列からひとつ選ぶ関数です。同じ色が2回続くこともありますが、幼児向けなら気にしなくて構いません。気になるなら、前回の色を覚えておいて選び直します。</p>
+
+  <div class="check"><b>ここで確認</b><p>風船が出るたびに色が変わる。ひもも一緒に色が変わっている。</p></div>
+
+  <span class="stepnum">STEP 7</span>
+  <h3 class="st">鳥を飛ばして、仕上げる</h3>
+
+  <p>鳥は風船と同じ作り方です。<strong>同じパターンを2回やる</strong>ことで、インスタンス化が身体に入ります。</p>
+
+  <p><code>bird.tscn</code> を新規作成し、ルートを <code>Node2D</code>、子に小さい ColorRect を1つ置きます。</p>
+
+  <pre><code># bird.gd
+
+extends Node2D
+
+const SPEED := 34.0
+const FLAP_SPEED := 6.0
+const FLAP_HEIGHT := 5.0
+
+var t := 0.0
+var base_y := 0.0
+
+
+func _ready() -> void:
+    base_y = position.y
+
+
+func _process(delta: float) -> void:
+    t += delta
+    position.x -= SPEED * delta
+    position.y = base_y + sin(t * FLAP_SPEED) * FLAP_HEIGHT
+    if position.x &lt; -60.0:
+        queue_free()</code></pre>
+
+  <p>Main に <code>BirdTimer</code>（Timer、Wait Time 6秒、Autostart オン）を置き、<code>timeout</code> を接続します。</p>
+
+  <pre><code># main.gd に追加
+
+@export var bird_scene: PackedScene
+
+@onready var birds: Node2D = $Birds
+
+
+func _on_bird_timer_timeout() -> void:
+    var b := bird_scene.instantiate()
+    b.position = Vector2(360.0, randf_range(60.0, 200.0))
+    birds.add_child(b)
+    $BirdTimer.wait_time = randf_range(5.0, 12.0)</code></pre>
+
+  <p>最後の行で、次に鳥が出るまでの時間を毎回変えています。<strong>一定間隔だと機械的に見える</strong>ので、ゆらぎを入れます。これも覚えておくと、いろいろな場面で効きます。</p>
+
+  <h3>幼児向けの詰め</h3>
+  <ul>
+    <li><strong>ふくらむ速さを落とす。</strong><code>GROW_SPEED</code> を下げると、押している時間が長くなって手応えが出ます。幼児は「押し続ける」動作自体が楽しいので、急がせないほうがよいです。</li>
+    <li><strong>次の風船までを短く。</strong>0.7秒でも長いかもしれません。0.4秒くらいまで詰めて試してください。</li>
+    <li><strong>押したら必ず何か起きる。</strong>飛んでいる最中に押しても無反応なのが気になるなら、小さい効果音だけ鳴らすようにします。</li>
+    <li><strong>音を足す。</strong>ふくらむ音を <code>AudioStreamPlayer</code> でループ再生し、離したら止める。これだけで体験が変わります。</li>
+    <li><strong>最後に絵を入れる。</strong>ColorRect を右クリック →「型を変更」で Sprite2D にします。</li>
+  </ul>
+
+  <div class="try"><b>完成の目安</b><p>押す → ふくらむ → 離す → ゆらゆら上がって消える → 次が出る、が何度でも繰り返せる。色が毎回変わり、雲と鳥が流れている。風船がノードとして溜まっていない。ここまでで完成です。</p></div>
+
+  <h3>余裕ができたら足す機能</h3>
+  <p>ここから先は作らなくても完成です。上から順に、だいたい簡単な順です。各アイデアの「プロンプトをコピー」を押すと、このゲームの内容とコードの作りまで入った質問文がコピーされます。無料プランのチャットにそのまま貼ってください。</p>
+
+  <div class="idea"><span class="lv">やさしい</span>
+    <h4>大きいほど高く、ゆっくり上がる</h4>
+    <p>いまはどの大きさでも同じ速さで上がります。大きい風船はゆっくり、小さい風船はすいっと上がるようにすると、膨らませる意味が生まれます。</p>
+    <button class="askbtn" data-ask="風船の大きさによって、上がる速さと横揺れの幅が変わるようにしたいです。大きい風船はゆっくり大きく揺れ、小さい風船は速く小さく揺れる感じにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">やさしい</span>
+    <h4>ふくらむ音を鳴らす</h4>
+    <p>押している間だけ音が鳴り、大きくなるほど音が高くなる。離すと止まる。幼児向けでは音の効果がとても大きいです。</p>
+    <button class="askbtn" data-ask="押している間だけ「ふくらむ音」を鳴らして、風船が大きくなるほど音の高さが上がるようにしたいです。離したら音を止めたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">やさしい</span>
+    <h4>ひもを揺らす</h4>
+    <p>いまのひもは棒のままです。風船の揺れに少し遅れてついてくるようにすると、生き物っぽくなります。</p>
+    <button class="askbtn" data-ask="風船のひもを、いまの直線ではなく、風船の揺れに少し遅れてついてくるように揺らしたいです。Line2Dを使う方法があれば知りたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">ふつう</span>
+    <h4>離した瞬間にキラッと光る</h4>
+    <p>手を離した合図をはっきりさせる演出です。一瞬だけ白く光らせて戻すだけでも、離したことがよく伝わります。</p>
+    <button class="askbtn" data-ask="風船から手を離した瞬間に、一瞬だけキラッと光る演出を入れたいです。派手すぎない、幼児向けの穏やかな見え方にしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">ふつう</span>
+    <h4>風船を2つ同時に出す</h4>
+    <p>いまは1つずつです。同時に2つ出して、押した位置に近いほうが膨らむようにすると、遊び方が広がります。</p>
+    <button class="askbtn" data-ask="いまは風船が1つずつですが、同時に2つ出して、押した位置に近いほうの風船が膨らむようにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">ふつう</span>
+    <h4>空が時間で変わる</h4>
+    <p>遊んでいるうちに、朝から昼、夕方へと空の色がゆっくり移り変わる。雲の色も一緒に変えると効果が出ます。</p>
+    <button class="askbtn" data-ask="遊んでいるうちに空の色がゆっくり移り変わって、朝・昼・夕方と変化するようにしたいです。雲の色も合わせて変えたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">むずかしい</span>
+    <h4>風船が雲の後ろを通る</h4>
+    <p>上がっていく風船が、雲にさしかかると少し隠れる。前後関係の表現なので、<a class="xref" data-ref="s17" href="s17.html">第17回</a>の描画順の実践になります。</p>
+    <button class="askbtn" data-ask="上がっていく風船が、雲にさしかかったときに雲の後ろに隠れるようにしたいです。描画の重なり順をどう設定すればいいか知りたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">むずかしい</span>
+    <h4>画面をなぞると風が吹く</h4>
+    <p>指でなぞった方向に、飛んでいる風船が少し押される。触った位置と動きを使うので、入力の扱いが一段深くなります。</p>
+    <button class="askbtn" data-ask="画面を指でなぞると、その方向に飛んでいる風船が少し押されるようにしたいです。なぞった向きと速さを取る方法から知りたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">むずかしい</span>
+    <h4>動物の形の風船</h4>
+    <p>ふつうの風船に混じって、ときどき動物の形のものが出る。出現の確率を持たせるので、ランダムの扱いが一段深くなります。</p>
+    <button class="askbtn" data-ask="ふつうの風船に混じって、ときどき動物の形の風船が出るようにしたいです。出る確率を設定できる形にしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <template id="ctx-p2">私はGodot 4でゲームを作っている初心者です。いま「風船をふくらませて放す」という幼児向けの小さなゲームを作っています。
+
+【ゲームの内容】
+・画面の下のほうにしぼんだ風船がひとつ浮かんでいる
+・画面を押している間、風船がゆっくり大きくなる（上限あり）
+・離すと、ゆらゆら横に揺れながら空へ上がっていき、画面の上で消える
+・少し待つと次の風船が出てくる。色は毎回変わる
+・空には雲が流れ、ときどき鳥が横切る
+・幼児向けなので割れないし、記録もつかない。失敗という状態がない
+
+【画面設定】
+・解像度 320×480、Stretch Mode は viewport、Aspect は keep
+
+【シーン構成】
+main.tscn : Main (Node2D) ← main.gd
+├─ Sky / Clouds(Cloud1〜3) / Ground
+├─ Balloons (Node2D)  ← 生まれた風船が入る
+├─ Birds (Node2D)
+├─ BirdTimer (Timer)
+balloon.tscn : Balloon (Node2D) ← balloon.gd
+├─ Body / String
+bird.tscn : Bird (Node2D) ← bird.gd
+
+【いまのコードの作り】
+・風船は balloon.gd が自分で管理している。enum Phase { GROWING, FLYING } で状態を持つ
+・押している間 size を delta で増やし、min() で上限を作っている
+・放すと phase を FLYING にして、position.y を減らしながら sin() で横に揺らしている
+・画面の上に出たら queue_free() で消える
+・Main は balloon_scene.instantiate() で風船を作り、released シグナルを受けて次を出す
+・色は Main が COLORS.pick_random() で決めて modulate に入れている
+
+【やりたいこと】
+</template>
+
+  <h3>balloon.gd 全文</h3>
+
+  <pre><code># balloon.gd
+
+extends Node2D
+
+signal released
+
+enum Phase { GROWING, FLYING }
+
+# ---- 調整用の値 ----
+const GROW_SPEED := 1.1      # 1秒あたりどれだけ大きくなるか
+const MAX_SIZE   := 3.2      # これ以上は大きくならない
+const RISE_SPEED := 90.0     # 上がる速さ（px/秒）
+const SWAY_WIDTH := 26.0     # 横揺れの幅（px）
+const SWAY_SPEED := 2.2      # 横揺れの速さ
+
+var phase: Phase = Phase.GROWING
+var holding := false
+var size := 0.6
+var t := 0.0
+var base_x := 0.0
+
+
+func _ready() -> void:
+    scale = Vector2.ONE * size
+
+
+func _process(delta: float) -> void:
+    if phase == Phase.GROWING:
+        if holding:
+            size = min(size + GROW_SPEED * delta, MAX_SIZE)
+            scale = Vector2.ONE * size
+    else:
+        t += delta
+        position.y -= RISE_SPEED * delta
+        position.x = base_x + sin(t * SWAY_SPEED) * SWAY_WIDTH
+        rotation = sin(t * SWAY_SPEED) * 0.14
+        if position.y &lt; -100.0:
+            queue_free()
+
+
+func hold() -> void:
+    holding = true
+
+
+func release() -> void:
+    if phase != Phase.GROWING:
+        return
+    holding = false
+    phase = Phase.FLYING
+    base_x = position.x
+    t = 0.0
+    released.emit()</code></pre>
+
+  <h3>main.gd 全文</h3>
+
+  <pre><code># main.gd
+
+extends Node2D
+
+# ---- 調整用の値 ----
+const CLOUD_SPEED := 8.0
+const SPAWN_X := 160.0
+const SPAWN_Y := 400.0
+const NEXT_DELAY := 0.7      # 次の風船が出るまでの待ち時間
+
+const COLORS := [
+    Color("ff6b6b"), Color("ffd166"), Color("06d6a0"),
+    Color("4cc9f0"), Color("c77dff"), Color("ffadad"),
+]
+
+@export var balloon_scene: PackedScene
+@export var bird_scene: PackedScene
+
+var current: Node2D = null
+
+@onready var clouds: Node2D   = $Clouds
+@onready var balloons: Node2D = $Balloons
+@onready var birds: Node2D    = $Birds
+
+
+func _ready() -> void:
+    spawn_balloon()
+
+
+func _process(delta: float) -> void:
+    for c in clouds.get_children():
+        c.position.x -= CLOUD_SPEED * delta
+        if c.position.x &lt; -80.0:
+            c.position.x = 340.0
+            c.position.y = randf_range(30.0, 170.0)
+
+
+func _input(event: InputEvent) -> void:
+    if current == null:
+        return
+    if event is InputEventMouseButton:
+        if event.pressed:
+            current.hold()
+        else:
+            current.release()
+
+
+# ---- 風船 ----
+func spawn_balloon() -> void:
+    var b := balloon_scene.instantiate()
+    b.position = Vector2(SPAWN_X, SPAWN_Y)
+    b.modulate = COLORS.pick_random()
+    b.released.connect(_on_balloon_released)
+    balloons.add_child(b)
+    current = b
+
+
+func _on_balloon_released() -> void:
+    current = null
+    await get_tree().create_timer(NEXT_DELAY).timeout
+    spawn_balloon()
+
+
+# ---- 鳥 ----
+func _on_bird_timer_timeout() -> void:
+    var b := bird_scene.instantiate()
+    b.position = Vector2(360.0, randf_range(60.0, 200.0))
+    birds.add_child(b)
+    $BirdTimer.wait_time = randf_range(5.0, 12.0)</code></pre>
+
+  <h3>詰まったときの確認手順</h3>
+  <table>
+    <tr><th>症状</th><th>見るところ</th></tr>
+    <tr><td>押しても膨らまない</td><td><code>current</code> に風船が入っているか。リモートツリーで確認する</td></tr>
+    <tr><td>風船が画面左上へ飛んでいく</td><td><code>base_x</code> を <code>release()</code> で記録し忘れている</td></tr>
+    <tr><td>次の風船が出てこない</td><td><code>released</code> シグナルを接続しているか。<code>emit()</code> を書いたか</td></tr>
+    <tr><td>風船が溜まっていく</td><td><code>queue_free()</code> の条件。上に抜ける前に消していないか、逆に一度も消していないか</td></tr>
+    <tr><td>下に伸びながら大きくなる</td><td>Balloon の子の Position。原点がひもの下端に来ているか</td></tr>
+    <tr><td>色が変わらない</td><td><code>modulate</code> を <code>add_child</code> の前後どちらで設定しても効きます。COLORS が空でないか</td></tr>
+    <tr><td>鳥が出ない</td><td>BirdTimer の Autostart と、<code>bird_scene</code> の割り当て</td></tr>
+  </table>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

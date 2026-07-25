@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>26 2Dビューの操作 — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="t1">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第5部 道具を使いこなす／2Dビューの操作</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="t1" data-title="2Dビューの操作">
+  <p class="eyebrow">第5部 道具を使いこなす · <b class="lno"></b> · 15分</p>
+  <h2>2Dビューの操作を速くする</h2>
+  <p class="aim">この回のねらい：置く・動かす・複製するを、迷わずできるようにする。</p>
+
+  <p>マップやシーンを組む時間の大半は、この画面での操作です。<strong>ここが速くなると、制作全体が速くなります。</strong></p>
+
+  <h3>見る</h3>
+  <table class="set">
+    <tr><th>操作</th><th>やり方</th></tr>
+    <tr><td>拡大・縮小</td><td>マウスホイール</td></tr>
+    <tr><td>画面を動かす</td><td>中ボタンでドラッグ、またはスペースを押しながらドラッグ</td></tr>
+    <tr><td>選んだものを画面に収める</td><td><code>F</code></td></tr>
+    <tr><td>元に戻す／やり直す</td><td><code>Ctrl</code>+<code>Z</code> / <code>Ctrl</code>+<code>Shift</code>+<code>Z</code></td></tr>
+  </table>
+
+  <h3>動かす</h3>
+  <p>画面左上に、操作モードを切り替えるボタンが並んでいます。既定では <code>Q</code> が選択、<code>W</code> が移動、<code>E</code> が回転、<code>S</code> が拡縮です。<strong>回転モードのまま気づかずドラッグして、絵が傾いてしまう</strong>のはよくある事故なので、迷ったら <code>Q</code> に戻す癖をつけてください。</p>
+
+  <table class="set">
+    <tr><th>操作</th><th>やり方</th></tr>
+    <tr><td>複製する</td><td><code>Ctrl</code>+<code>D</code></td></tr>
+    <tr><td>位置を正確に決める</td><td>インスペクタの Position に数値を打つ</td></tr>
+    <tr><td>グリッドに吸着させる</td><td>上部の磁石アイコンをオン</td></tr>
+    <tr><td>吸着の間隔を決める</td><td>スナップ設定でグリッドの歩幅を 16 などにする</td></tr>
+  </table>
+
+  <div class="note"><b>ピクセルアートなら必ずスナップ</b><p>タイルが16×16なら、グリッドの歩幅も16にしてスナップをオンにします。手で置くと必ず1〜2ピクセルずれ、絵の継ぎ目に線が入ります。<strong>ずれてから直すのは大変なので、最初にオンにしてください。</strong></p></div>
+
+  <h3>触りたくないものをロックする</h3>
+  <p>背景を置いたあと、キャラを動かそうとして背景を掴んでしまう——これを防ぐのがロックです。ノードを選んで、上部の<strong>鍵アイコン</strong>を押すと、ビュー上で選択できなくなります。シーンドックからは今までどおり選べます。</p>
+
+  <p>その隣の「子をまとめて選択」ボタンも便利です。オンにすると、子ノードをクリックしても<strong>親が選ばれる</strong>ようになります。キャラの一部だけを掴んでしまう事故が減ります。</p>
+
+  <h3>知っておくと効く2つ</h3>
+  <ul>
+    <li><strong>ブランチをシーンとして保存</strong> — ノードを右クリックして選ぶと、そのノード以下がまるごと別シーンになります。「作っているうちに、これは部品として切り出したくなった」というときに、組み直さずに済みます。</li>
+    <li><strong>型を変更</strong> — 右クリックから、ノードの種類を別のものに差し替えられます。位置や子はそのまま残ります。ColorRect で作っておいて、絵ができたら Sprite2D に変える——という進め方ができるのはこの機能のおかげです。</li>
+  </ul>
+
+  <div class="try"><b>やってみる</b><p>ノードを1つ置き、スナップをオンにして <code>Ctrl</code>+<code>D</code> で複製し、グリッドに沿って並べる。次に鍵アイコンでロックし、ビュー上で選べなくなることを確認する。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>05 エディタ画面の4区画 — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s4">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第1部 GODOTの地図／エディタ画面の4区画</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s4" data-title="エディタ画面の4区画">
+  <p class="eyebrow">第1部 GODOTの地図 · <b class="lno"></b> · 15分</p>
+  <h2>エディタ画面の4つの区画</h2>
+  <p class="aim">この回のねらい：どこに何があるかを覚え、探す時間をゼロにする。</p>
+
+  <p>Godotのエディタは、役割の違う4つの区画でできています。ここを覚えるだけで作業速度が変わります。</p>
+
+  <table>
+    <tr><th>区画</th><th>場所</th><th>役割</th></tr>
+    <tr><td><strong>シーンドック</strong></td><td>左上</td><td>いま編集中のノードの木。ノードの追加・並べ替え・親子変更はここ。</td></tr>
+    <tr><td><strong>ファイルシステム</strong></td><td>左下</td><td>プロジェクト内の全ファイル。画像や <code>.tscn</code> はここからドラッグする。</td></tr>
+    <tr><td><strong>インスペクタ</strong></td><td>右</td><td>選択中のノードの設定値。位置、画像、色、速度などを触る場所。</td></tr>
+    <tr><td><strong>下パネル</strong></td><td>下</td><td>出力、デバッガ、アニメーション、オーディオ。実行中のエラーはここに出る。</td></tr>
+  </table>
+
+  <h3>右側のタブを見落としがち</h3>
+  <p>インスペクタの上には<strong>「ノード」タブ</strong>が並んでいます。ここにシグナルとグループがあります。<a class="xref" data-ref="s13" href="s13.html">第13回</a>と<a class="xref" data-ref="s19" href="s19.html">第19回</a>で使うので、場所だけ覚えておいてください。</p>
+
+  <h3>中央のモード切替</h3>
+  <p>画面上部中央に <strong>2D / 3D / Script / AssetLib</strong> の切り替えがあります。2Dゲームを作るなら2DとScriptを行き来するだけです。</p>
+
+  <div class="try"><b>やってみる</b><p>ノードを1つ選び、右側の「インスペクタ」と「ノード」タブを交互に押して、表示が変わることを確認する。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>B4 なかまさがし — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="p4">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第6部 実践 — 9本を作る／なかまさがし</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="p4" data-kind="build" data-title="なかまさがし" data-file="main.gd">
+  <p class="eyebrow">実践 B4 · 全8ステップ · 規模：4〜6日</p>
+  <h2>なかまさがし — 幼児向け知育</h2>
+  <p class="aim">新しく覚える：データとロジックを分ける／Resourceで問題を持つ／UIコンテナで並べる／正解の演出を作る。</p>
+
+  <div class="note"><b>この章は設計の練習です</b><p>技術的にはB3より易しい部分もあります。それでもここに置いているのは、<strong>問題を100問に増やしても、コードを1行も触らずに済む形</strong>を作る練習だからです。この形が作れないと、B8の経営シムやB9の農場シムで扱うデータ量に耐えられません。</p></div>
+
+  <h3>作るものを先に決める</h3>
+  <div class="spec">
+    <p><strong>幼児向けの「なかまさがし」。</strong></p>
+    <p>画面の上に、同じ仲間のものが2つ並ぶ（たとえば りんご と バナナ）。下に選択肢が2つ（みかん と くるま）。仲間のほうを選ぶ。</p>
+    <p>正解すると、星が舞って音が鳴り、少し待って次の問題へ。<strong>まちがえても止まらない。</strong>選んだほうが少し首を振るだけで、もう一度選べる。減点も、やり直しもない。</p>
+    <p>問題の区切りはなく、延々と続く。問題は毎回シャッフルされる。</p>
+  </div>
+
+  <div class="note"><b>まちがいを罰にしない</b><p>幼児向けでは、まちがえたときに「ブブー」と大きな音を出したり、画面を赤くしたりすると、そこで遊ぶのをやめます。<strong>気づかせるだけで、責めない。</strong>選んだものが小さく首を振る程度がちょうどよく、そのまま正解を選べば何事もなく進みます。</p></div>
+
+  <h3>この章の考え方の芯</h3>
+  <div class="note"><b>2つ</b>
+    <p><strong>1. 先に動かして、あとからデータを外に出す。</strong>いきなり完璧なデータ構造を設計しようとすると、たいてい1画面も動かないまま終わります。STEP 2〜5では問題をコードに直接書いて動かし、STEP 6で外に出します。この順番が現実的です。</p>
+    <p><strong>2. 正解がどちらにあるかは、データに書かない。</strong>「正解の絵」と「はずれの絵」を持たせておき、<strong>左右どちらに置くかは実行時にランダムで決めます。</strong>こうすると、いつも右が正解といった偏りが起きません。データを作るときに左右を考えなくて済むのも利点です。</p>
+  </div>
+
+  <h3>ノード構成（完成形）</h3>
+  <pre><code>main.tscn
+Main (Control)                        ← main.gd
+├─ Background (ColorRect)
+├─ Layout (VBoxContainer)
+│  ├─ Title (Label)                   「なかまは どっち？」
+│  ├─ Samples (HBoxContainer)
+│  │  ├─ Sample1 (TextureRect)
+│  │  └─ Sample2 (TextureRect)
+│  └─ Choices (HBoxContainer)
+│     ├─ ChoiceA (Button)
+│     └─ ChoiceB (Button)
+├─ Reward (Control)
+│  ├─ Stars (GPUParticles2D)
+│  ├─ CheerLabel (Label)              「せいかい！」
+│  └─ AnimationPlayer
+├─ CorrectSound (AudioStreamPlayer)
+└─ WrongSound (AudioStreamPlayer)
+
+item.gd      → class_name Item     （絵と名前をひとつ持つ）
+question.gd  → class_name Question （お手本・正解・はずれをまとめる）</code></pre>
+
+  <div class="note"><b>ルートが Control である理由</b><p>この章はUIが主役です。<a class="xref" data-ref="s9" href="s9.html">第9回</a>のとおり、画面サイズに合わせて伸縮してほしいものは Control 系にします。Node2D で作って座標を打つと、タブレットの画面比が変わった瞬間に崩れます。</p></div>
+
+  <span class="stepnum">STEP 0</span>
+  <h3 class="st">プロジェクトの用意</h3>
+
+  <table class="set">
+    <tr><th>場所</th><th>項目</th><th>値</th></tr>
+    <tr><td>表示 → ウィンドウ</td><td>Viewport Width / Height</td><td>480 / 320</td></tr>
+    <tr><td>表示 → ウィンドウ</td><td>Stretch → Mode / Aspect</td><td>canvas_items / keep</td></tr>
+    <tr><td>レンダリング → テクスチャ</td><td>Default Texture Filter</td><td>Nearest</td></tr>
+  </table>
+
+  <div class="note"><b>今回だけ Stretch Mode が違います</b><p>B1〜B3では <code>viewport</code> でした。UIが主役の画面では <code>canvas_items</code> のほうが、文字が拡大されてもぼやけにくくなります。ドット絵を大きく見せたいときは <code>viewport</code>、UIと文字が主役なら <code>canvas_items</code>。使い分けを覚えておいてください。</p></div>
+
+  <span class="stepnum">STEP 1</span>
+  <h3 class="st">画面を組む</h3>
+
+  <p>座標は一切打ちません。<strong>コンテナに並べさせます。</strong></p>
+
+  <table class="set">
+    <tr><th>ノード</th><th>型</th><th>設定</th></tr>
+    <tr><td>Main</td><td>Control</td><td>アンカープリセット「全面」、main.gd をアタッチ</td></tr>
+    <tr><td>Background</td><td>ColorRect</td><td>アンカープリセット「全面」、淡い色</td></tr>
+    <tr><td>Layout</td><td>VBoxContainer</td><td>アンカープリセット「全面」、Theme Overrides → Separation 16</td></tr>
+    <tr><td>Title</td><td>Label</td><td>Text「なかまは どっち？」、Horizontal Alignment 中央</td></tr>
+    <tr><td>Samples</td><td>HBoxContainer</td><td>Alignment 中央、Separation 20</td></tr>
+    <tr><td>Sample1 / 2</td><td>TextureRect</td><td>Custom Minimum Size (80, 80)、Expand Mode「Ignore Size」</td></tr>
+    <tr><td>Choices</td><td>HBoxContainer</td><td>Alignment 中央、Separation 40</td></tr>
+    <tr><td>ChoiceA / B</td><td>Button</td><td>Custom Minimum Size (140, 110)、Expand Icon オン</td></tr>
+  </table>
+
+  <div class="note"><b>選択肢が Button である理由</b><p>絵がまだ無いうちは<strong>文字を出して進められる</strong>からです。Button は <code>text</code> と <code>icon</code> の両方を持てるので、あとで絵ができたら <code>icon</code> に入れるだけで済みます。ノードを差し替える必要がありません。</p>
+  <p>幼児が指で押すので、Custom Minimum Size は大きめにしてください。間隔（Separation）を広く取るのも、誤タップを防ぐために効きます。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>F5で、タイトル・お手本2つ・ボタン2つが縦に並んで中央に表示される。ウィンドウの大きさを変えても崩れない。</p></div>
+
+  <span class="stepnum">STEP 2</span>
+  <h3 class="st">まずは1問、コードに直接書いて出す</h3>
+
+  <p>データ構造の設計は後回しです。<strong>動く形を先に作ります。</strong></p>
+
+  <pre><code># main.gd
+
+extends Control
+
+var current := {}
+
+@onready var choice_a: Button = $Layout/Choices/ChoiceA
+@onready var choice_b: Button = $Layout/Choices/ChoiceB
+
+
+func _ready() -> void:
+    current = {
+        "samples": ["りんご", "バナナ"],
+        "correct": "みかん",
+        "wrong": "くるま",
+    }
+    show_question()
+
+
+func show_question() -> void:
+    # 左右どちらに正解を置くかを、実行時に決める
+    var flip := randi() % 2 == 0
+    set_choice(choice_a, current["correct"] if flip else current["wrong"], flip)
+    set_choice(choice_b, current["wrong"] if flip else current["correct"], not flip)
+
+
+func set_choice(btn: Button, name: String, is_correct: bool) -> void:
+    btn.text = name
+    btn.set_meta("correct", is_correct)</code></pre>
+
+  <p><code>set_meta()</code> は、ノードに好きな名前で値をくっつけておける仕組みです。「このボタンが正解かどうか」を持たせるのに使っています。変数を2つ用意して管理するより、ボタン自身に持たせたほうが取り違えません。</p>
+
+  <div class="check"><b>ここで確認</b><p>F5で、ボタンに「みかん」「くるま」が出る。何度か再起動すると、左右が入れ替わる。</p></div>
+
+  <span class="stepnum">STEP 3</span>
+  <h3 class="st">選んで、判定する</h3>
+
+  <pre><code># main.gd に追加
+
+var answered := false
+
+
+# _ready の先頭に追加
+    choice_a.pressed.connect(_on_choice.bind(choice_a))
+    choice_b.pressed.connect(_on_choice.bind(choice_b))
+
+
+func _on_choice(btn: Button) -> void:
+    if answered:
+        return
+    if btn.get_meta("correct"):
+        answered = true
+        on_correct(btn)
+    else:
+        on_wrong(btn)
+
+
+func on_correct(_btn: Button) -> void:
+    print("せいかい")
+
+
+func on_wrong(_btn: Button) -> void:
+    print("ちがうよ")</code></pre>
+
+  <div class="note"><b><code>bind</code> の使いどころ</b><p><code>pressed</code> シグナルは「押された」としか教えてくれず、どのボタンかは分かりません。<code>_on_choice.bind(choice_a)</code> と書くと、<strong>呼ばれるときに choice_a を引数として渡してくれます。</strong>同じ処理を複数のボタンで共有したいときの定番です。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>正しいほうを押すと「せいかい」、違うほうを押すと「ちがうよ」が出力に出る。</p></div>
+
+  <span class="stepnum">STEP 4</span>
+  <h3 class="st">正解のごほうび演出</h3>
+
+  <p><a class="xref" data-ref="s7b" href="s7b.html">第8回</a>の AnimationPlayer をここでも使います。<strong>演出は Reward にまとめて、そこだけで完結させます。</strong></p>
+
+  <table class="set">
+    <tr><th>ノード</th><th>型</th><th>設定</th></tr>
+    <tr><td>Reward</td><td>Control</td><td>アンカープリセット「全面」、Mouse → Filter「無視」</td></tr>
+    <tr><td>CheerLabel</td><td>Label</td><td>Text「せいかい！」、大きめのフォント、中央</td></tr>
+    <tr><td>Stars</td><td>GPUParticles2D</td><td>Amount 24、One Shot オン、Emitting オフ</td></tr>
+    <tr><td>AnimationPlayer</td><td>—</td><td><code>cheer</code> を1本作る（0.9秒）</td></tr>
+  </table>
+
+  <p><code>cheer</code> の中身は、CheerLabel の <code>scale</code> を 0 → 1.2 → 1.0 と動かし、最後に <code>modulate:a</code> を 1 → 0 にするだけで十分です。</p>
+
+  <div class="note"><b>Mouse Filter を「無視」にする理由</b><p>Reward は画面全面を覆っています。既定のままだと、<strong>この見えないパネルがタップを吸い取って</strong>ボタンが押せなくなります。演出用に重ねる Control は、必ず Mouse → Filter を「無視」にしてください。ここは非常によく踏む落とし穴です。</p></div>
+
+  <pre><code># main.gd の on_correct を書き換える
+
+@onready var reward_anim: AnimationPlayer = $Reward/AnimationPlayer
+
+
+func on_correct(_btn: Button) -> void:
+    $CorrectSound.play()
+    $Reward/Stars.restart()
+    reward_anim.play("cheer")
+    await reward_anim.animation_finished
+    await get_tree().create_timer(0.3).timeout
+    next_question()
+
+
+func next_question() -> void:
+    answered = false
+    show_question()</code></pre>
+
+  <div class="check"><b>ここで確認</b><p>正解を押すと「せいかい！」が弾んで星が舞い、少し待って左右が入れ替わる。演出中に連打しても二重に進まない。</p></div>
+
+  <span class="stepnum">STEP 5</span>
+  <h3 class="st">まちがえたときの扱い</h3>
+
+  <p>止めない、責めない。<strong>選んだものが小さく首を振るだけ</strong>にします。</p>
+
+  <pre><code># main.gd の on_wrong を書き換える
+
+func on_wrong(btn: Button) -> void:
+    $WrongSound.play()
+    var t := create_tween()
+    t.tween_property(btn, "rotation", 0.05, 0.06)
+    t.tween_property(btn, "rotation", -0.05, 0.12)
+    t.tween_property(btn, "rotation", 0.0, 0.06)</code></pre>
+
+  <div class="note"><b>回転の中心</b><p>Control ノードの回転は既定で<strong>左上を軸</strong>にします。ChoiceA / ChoiceB の <code>Pivot Offset</code> を、サイズの半分（70, 55）にしてください。設定しないと、ボタンが大きく振り回されます。B1のボタン演出と同じ落とし穴です。</p>
+  <p><code>WrongSound</code> は、やさしい音にしてください。ここで強い否定の音を入れると、幼児は次から押すのをためらいます。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>違うほうを押すと、そのボタンが小さく左右に揺れる。画面はそのままで、正解を押せば進む。何度まちがえても不利にならない。</p></div>
+
+  <span class="stepnum">STEP 6</span>
+  <h3 class="st">データを Resource に移す</h3>
+
+  <p><strong>ここがこの章の本題です。</strong>問題をコードから追い出します。</p>
+
+  <p>まず、絵と名前をひとつ持つだけの型を作ります。ファイルシステムで右クリック →「新規スクリプト」で <code>item.gd</code> を作成。</p>
+
+  <pre><code># item.gd
+
+class_name Item
+extends Resource
+
+@export var name: String = ""
+@export var image: Texture2D</code></pre>
+
+  <p>次に、問題ひとつ分をまとめる型です。</p>
+
+  <pre><code># question.gd
+
+class_name Question
+extends Resource
+
+@export var group_name: String = ""    # 「くだもの」などのメモ
+@export var samples: Array[Item] = []  # お手本（同じ仲間）
+@export var correct: Item              # 正解の選択肢
+@export var wrong: Item                # はずれの選択肢</code></pre>
+
+  <div class="note"><b>Item と Question に分けた理由</b><p>「りんご」を、くだものの問題でも、あかい色の問題でも使いたいからです。Item を独立したファイルにしておくと、<strong>一度作った絵と名前を、いくつもの問題から使い回せます。</strong>りんごの絵を差し替えたら、それを使う全部の問題で変わります。<a class="xref" data-ref="s3" href="s3.html">第3回</a>のインスタンス化と同じ発想です。</p></div>
+
+  <h3>ファイルの作り方</h3>
+  <ul>
+    <li>ファイルシステムで右クリック →「新規」→「リソース」</li>
+    <li>一覧から <code>Item</code> を選ぶ（さっき <code>class_name</code> を付けたので出てきます）</li>
+    <li><code>res://items/apple.tres</code> のように保存</li>
+    <li>選択するとインスペクタに <code>Name</code> と <code>Image</code> が出るので、そこに入れる</li>
+  </ul>
+
+  <p>同じ手順で <code>Question</code> のファイルも作り、<code>samples</code> に Item をドラッグ、<code>correct</code> と <code>wrong</code> にも Item を入れます。</p>
+
+  <pre><code># main.gd に追加（current の型を変える）
+
+@export var questions: Array[Question] = []
+
+var pool: Array[Question] = []
+var current: Question = null
+
+@onready var samples_box: HBoxContainer = $Layout/Samples
+
+
+func next_question() -> void:
+    if pool.is_empty():
+        pool = questions.duplicate()
+        pool.shuffle()
+    current = pool.pop_front()
+    answered = false
+    show_question()
+
+
+func show_question() -> void:
+    for i in samples_box.get_child_count():
+        var s: TextureRect = samples_box.get_child(i)
+        if i &lt; current.samples.size():
+            s.texture = current.samples[i].image
+            s.show()
+        else:
+            s.hide()
+
+    var flip := randi() % 2 == 0
+    set_choice(choice_a, current.correct if flip else current.wrong, flip)
+    set_choice(choice_b, current.wrong if flip else current.correct, not flip)
+
+
+func set_choice(btn: Button, item: Item, is_correct: bool) -> void:
+    btn.icon = item.image
+    btn.text = item.name
+    btn.set_meta("correct", is_correct)</code></pre>
+
+  <p><code>_ready</code> の中で問題を組み立てていた部分は削除し、<code>next_question()</code> を呼ぶだけにします。Main を選び、インスペクタの <code>Questions</code> に、作った <code>.tres</code> をドラッグして並べてください。</p>
+
+  <div class="note"><b><code>duplicate()</code> と <code>shuffle()</code></b><p><code>questions</code> をそのままシャッフルすると、<strong>インスペクタで設定した元のデータが並べ替わってしまいます。</strong><code>duplicate()</code> でコピーを作り、そちらを使い切る形にしています。使い切ったらまたコピーし直すので、ひと回りするまで同じ問題は出ません。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>インスペクタに並べた問題が、シャッフルされて順に出る。<strong>問題を1問足す作業が、Question のファイルを1つ作ってインスペクタに足すだけ</strong>で済んでいる。コードを触る必要がない。</p></div>
+
+  <span class="stepnum">STEP 7</span>
+  <h3 class="st">問題を増やして、仕上げる</h3>
+
+  <p>ここからは絵とデータを作る作業です。コードはもう触りません。</p>
+
+  <ul>
+    <li><strong>まず10問。</strong>くだもの／のりもの／どうぶつ／たべもの あたりで作ると、幼児にも仲間の区別がつきます。</li>
+    <li><strong>はずれは「明らかに違うもの」から始める。</strong>りんご・バナナ に対して くるま。ここで「みかん と ぶどう のどちらが正解か」のような難問を入れると、幼児は選べません。</li>
+    <li><strong>お手本は2つで十分。</strong>1つだと仲間の共通点が伝わらず、3つだと画面が混みます。</li>
+    <li><strong>文字は残しておく。</strong>絵を入れても <code>text</code> を消さないでおくと、大人が横で読んであげられます。</li>
+    <li><strong>ごほうびに変化を。</strong>正解時の言葉を「せいかい！」「すごい！」「よくできました！」からランダムに選ぶと、飽きが来にくくなります。</li>
+  </ul>
+
+  <div class="try"><b>完成の目安</b><p>10問がシャッフルされて延々と出る。正解すると星が舞って次へ進む。まちがえても止まらず、何度でも選べる。<strong>問題を1問足すのに、コードを1行も触らない。</strong>ここまでできたら完成です。</p></div>
+
+  <h3>余裕ができたら足す機能</h3>
+  <p>ここから先は作らなくても完成です。上から順に、だいたい簡単な順です。「プロンプトをコピー」を押すと、このゲームの内容とコードの作りまで入った質問文がコピーされます。</p>
+
+  <div class="idea"><span class="lv">やさしい</span>
+    <h4>ほめ言葉をランダムにする</h4>
+    <p>「せいかい！」だけでなく、数種類からランダムに選ぶ。飽きにくくなります。</p>
+    <button class="askbtn" data-ask="正解したときに表示するほめ言葉を、数種類の中からランダムに選んで出すようにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">やさしい</span>
+    <h4>音声で問題を読み上げる</h4>
+    <p>「なかまは どっち？」や選択肢の名前を、録音した声で再生する。文字が読めない子には効果が大きいです。</p>
+    <button class="askbtn" data-ask="問題の読み上げ音声を、Itemごとに音声ファイルを持たせて再生するようにしたいです。Resourceに音声ファイルを持たせる方法から知りたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">やさしい</span>
+    <h4>お手本を3つにする</h4>
+    <p>共通点がより伝わりやすくなります。いまのコードは既に3つに対応できる形なので、ノードを増やすだけで済むはずです。</p>
+    <button class="askbtn" data-ask="お手本の数を問題ごとに2つや3つと変えられるようにしたいです。いまは Samples の下に TextureRect を2つ置いています。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">ふつう</span>
+    <h4>選択肢を3つ・4つに増やす</h4>
+    <p>慣れてきた子には難しくできる。ボタンを動的に作る形になるので、UIの作り方が一段深くなります。</p>
+    <button class="askbtn" data-ask="選択肢を2つではなく3つや4つに増やせるようにしたいです。問題ごとに選択肢の数が変わる形にしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">ふつう</span>
+    <h4>カテゴリを選べるようにする</h4>
+    <p>「くだもの」「のりもの」など、遊ぶ分野を最初に選ぶ。問題データにグループ名を持たせてあるので、絞り込むだけで作れます。</p>
+    <button class="askbtn" data-ask="遊ぶ前にカテゴリ（くだもの・のりものなど）を選べるようにして、そのカテゴリの問題だけが出るようにしたいです。Question に group_name を持たせてあります。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">ふつう</span>
+    <h4>まちがえたらそっとヒント</h4>
+    <p>2回まちがえたら、正解のほうがほんのり光る。詰まって離脱するのを防げます。</p>
+    <button class="askbtn" data-ask="同じ問題で2回まちがえたら、正解の選択肢がほんのり光ってヒントになる仕組みを入れたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">むずかしい</span>
+    <h4>苦手な仲間を覚えておく</h4>
+    <p>まちがえたグループを記録し、そのグループの問題を多めに出す。地味ですが、知育としての効果が一番大きい改良です。</p>
+    <button class="askbtn" data-ask="まちがえたグループを記録しておいて、そのグループの問題が出やすくなるようにしたいです。記録は保存して次回も引き継ぎたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">むずかしい</span>
+    <h4>問題を画面から追加できるようにする</h4>
+    <p>エディタを開かなくても、アプリの中で写真を撮って問題を作れる。手間はかかりますが、自分の家のものを問題にできます。</p>
+    <button class="askbtn" data-ask="エディタを使わずに、アプリの画面から問題を追加できるようにしたいです。画像を選んで名前を付けて保存する形にしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">むずかしい</span>
+    <h4>ドラッグして仲間の輪に入れる</h4>
+    <p>選ぶのではなく、正しいほうを丸の中へ引っ張り込む。操作が直感的になり、幼児にはこちらのほうが分かりやすい場合があります。</p>
+    <button class="askbtn" data-ask="選択肢をタップして選ぶのではなく、ドラッグして仲間の輪の中に入れる操作に変えたいです。Godot 4でのドラッグ操作の作り方から知りたいです。">プロンプトをコピー</button>
+  </div>
+
+  <template id="ctx-p4">私はGodot 4でゲームを作っている初心者です。いま「なかまさがし」という幼児向けの知育ゲームを作っています。
+
+【ゲームの内容】
+・画面の上に、同じ仲間のものが2つ並ぶ（例：りんご と バナナ）
+・下に選択肢が2つ（例：みかん と くるま）。仲間のほうを選ぶ
+・正解すると星が舞って「せいかい！」と出て、次の問題へ進む
+・まちがえても止まらない。選んだボタンが小さく首を振るだけで、もう一度選べる
+・減点もやり直しもない。問題の区切りはなく延々と続く。問題は毎回シャッフルされる
+
+【画面設定】
+・解像度 480×320、Stretch Mode は canvas_items、Aspect は keep
+
+【シーン構成】
+main.tscn : Main (Control) ← main.gd
+├─ Background (ColorRect)
+├─ Layout (VBoxContainer)
+│  ├─ Title (Label)
+│  ├─ Samples (HBoxContainer) ├─ Sample1 ├─ Sample2 (TextureRect)
+│  └─ Choices (HBoxContainer) ├─ ChoiceA ├─ ChoiceB (Button)
+├─ Reward (Control) ├─ Stars (GPUParticles2D) ├─ CheerLabel ├─ AnimationPlayer
+├─ CorrectSound / WrongSound (AudioStreamPlayer)
+
+【データの持ち方】
+item.gd : class_name Item extends Resource
+  @export var name: String
+  @export var image: Texture2D
+question.gd : class_name Question extends Resource
+  @export var group_name: String
+  @export var samples: Array[Item]
+  @export var correct: Item
+  @export var wrong: Item
+
+【いまのコードの作り】
+・Main は @export var questions: Array[Question] で問題を持つ
+・pool に duplicate() したものを shuffle() して、pop_front() で1問ずつ取り出す
+・正解が左右どちらに来るかは randi() % 2 で実行時に決めている
+・各ボタンに set_meta("correct", true/false) で正解かどうかを持たせている
+・押されたら get_meta("correct") で判定し、正解なら AnimationPlayer の "cheer" を再生
+・まちがいは Tween でボタンを小さく左右に揺らすだけ
+
+【やりたいこと】
+</template>
+
+  <h3>item.gd / question.gd 全文</h3>
+
+  <pre><code># item.gd
+
+class_name Item
+extends Resource
+
+@export var name: String = ""
+@export var image: Texture2D</code></pre>
+
+  <pre><code># question.gd
+
+class_name Question
+extends Resource
+
+@export var group_name: String = ""    # 「くだもの」などのメモ
+@export var samples: Array[Item] = []  # お手本（同じ仲間）
+@export var correct: Item              # 正解の選択肢
+@export var wrong: Item                # はずれの選択肢</code></pre>
+
+  <h3>main.gd 全文</h3>
+
+  <pre><code># main.gd
+
+extends Control
+
+@export var questions: Array[Question] = []
+
+var pool: Array[Question] = []
+var current: Question = null
+var answered := false
+
+@onready var samples_box: HBoxContainer = $Layout/Samples
+@onready var choice_a: Button = $Layout/Choices/ChoiceA
+@onready var choice_b: Button = $Layout/Choices/ChoiceB
+@onready var reward_anim: AnimationPlayer = $Reward/AnimationPlayer
+
+
+func _ready() -> void:
+    choice_a.pressed.connect(_on_choice.bind(choice_a))
+    choice_b.pressed.connect(_on_choice.bind(choice_b))
+    next_question()
+
+
+# ---- 出題 ----
+func next_question() -> void:
+    if pool.is_empty():
+        pool = questions.duplicate()
+        pool.shuffle()
+    current = pool.pop_front()
+    answered = false
+    show_question()
+
+
+func show_question() -> void:
+    for i in samples_box.get_child_count():
+        var s: TextureRect = samples_box.get_child(i)
+        if i &lt; current.samples.size():
+            s.texture = current.samples[i].image
+            s.show()
+        else:
+            s.hide()
+
+    # 正解を左右どちらに置くかは、実行時に決める
+    var flip := randi() % 2 == 0
+    set_choice(choice_a, current.correct if flip else current.wrong, flip)
+    set_choice(choice_b, current.wrong if flip else current.correct, not flip)
+
+
+func set_choice(btn: Button, item: Item, is_correct: bool) -> void:
+    btn.icon = item.image
+    btn.text = item.name
+    btn.rotation = 0.0
+    btn.set_meta("correct", is_correct)
+
+
+# ---- 判定 ----
+func _on_choice(btn: Button) -> void:
+    if answered:
+        return
+    if btn.get_meta("correct"):
+        answered = true
+        on_correct(btn)
+    else:
+        on_wrong(btn)
+
+
+func on_correct(_btn: Button) -> void:
+    $CorrectSound.play()
+    $Reward/Stars.restart()
+    reward_anim.play("cheer")
+    await reward_anim.animation_finished
+    await get_tree().create_timer(0.3).timeout
+    next_question()
+
+
+func on_wrong(btn: Button) -> void:
+    $WrongSound.play()
+    var t := create_tween()
+    t.tween_property(btn, "rotation", 0.05, 0.06)
+    t.tween_property(btn, "rotation", -0.05, 0.12)
+    t.tween_property(btn, "rotation", 0.0, 0.06)</code></pre>
+
+  <h3>詰まったときの確認手順</h3>
+  <table>
+    <tr><th>症状</th><th>見るところ</th></tr>
+    <tr><td>ボタンが押せない</td><td>Reward の Mouse → Filter が「無視」になっているか</td></tr>
+    <tr><td>新規リソースの一覧に Item が出ない</td><td><code>class_name</code> を書いたか。書いた後にファイルを保存したか</td></tr>
+    <tr><td>ボタンが大きく振り回される</td><td>ChoiceA / B の <code>Pivot Offset</code></td></tr>
+    <tr><td>いつも同じ問題ばかり出る</td><td><code>pool</code> を使い切ってから作り直しているか</td></tr>
+    <tr><td>インスペクタの問題が並べ替わる</td><td><code>duplicate()</code> を挟まずに shuffle していないか</td></tr>
+    <tr><td>絵が出ない</td><td>TextureRect の Expand Mode と Custom Minimum Size</td></tr>
+    <tr><td>演出中に連打で二重に進む</td><td><code>answered</code> を正解の直後に true にしているか</td></tr>
+    <tr><td>ボタンが傾いたまま次の問題へ</td><td><code>set_choice</code> で <code>rotation = 0.0</code> に戻しているか</td></tr>
+  </table>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

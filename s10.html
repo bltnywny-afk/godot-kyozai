@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>15 時間と音 — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s10">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第2部 ノードを選ぶ／時間と音</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s10" data-title="時間と音">
+  <p class="eyebrow">第2部 ノードを選ぶ · <b class="lno"></b> · 15分</p>
+  <h2>時間と音のノード</h2>
+  <p class="aim">この回のねらい：待つ・鳴らすを、コードを書かずに用意する。</p>
+
+  <h3>Timer</h3>
+  <p>一定時間後に知らせてくれるノードです。インスペクタで <code>Wait Time</code>、繰り返すかの <code>One Shot</code>、自動開始の <code>Autostart</code> を設定します。</p>
+  <pre><code>func _ready() -> void:
+    $Timer.timeout.connect(_on_timeout)
+
+func _on_timeout() -> void:
+    spawn_enemy()</code></pre>
+
+  <p>1回だけ待つならノードすら不要で、こう書けます。</p>
+  <pre><code>await get_tree().create_timer(0.5).timeout
+print("0.5秒たった")</code></pre>
+
+  <h3>音のノード3種</h3>
+  <table>
+    <tr><td><code>AudioStreamPlayer</code></td><td>BGMなど、位置に関係ない音</td></tr>
+    <tr><td><code>AudioStreamPlayer2D</code></td><td>位置に応じて左右・音量が変わる効果音</td></tr>
+    <tr><td><code>AudioStreamPlayer</code>を複数</td><td>同じ音を重ねて鳴らしたいとき</td></tr>
+  </table>
+
+  <div class="note"><b>覚えておくと楽</b><p>短い効果音は、鳴らし終わったノードを消す運用にすると管理が楽です。<code>finished</code> シグナルで <code>queue_free()</code> を呼びます。</p></div>
+
+  <div class="try"><b>やってみる</b><p>Timer を Autostart・Wait Time 1秒・One Shot オフで置き、timeout で <code>print</code> するだけのコードを書いて実行する。下パネルの「出力」に1秒ごとに出れば成功。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

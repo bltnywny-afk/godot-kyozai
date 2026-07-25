@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>02 Godotはノードの木 — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s1">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第1部 GODOTの地図／Godotはノードの木</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s1" data-title="Godotはノードの木">
+  <p class="eyebrow">第1部 GODOTの地図 · <b class="lno"></b> · 15分</p>
+  <h2>Godotは「ノードの木」でできている</h2>
+  <p class="aim">この回のねらい：Godotの世界の最小単位を知る。</p>
+
+  <p>Godotで作るものは、すべて<strong>ノード</strong>という部品の組み合わせです。プレイヤーも、背景も、ボタンも、音も、全部ノードです。</p>
+
+  <p>ノードは1つにつき1つの仕事しか持ちません。画像を表示するノードは表示だけ、当たり判定を持つノードは判定だけをします。だから機能を作るときは「1つのすごいノード」を探すのではなく、<strong>小さいノードを親子に並べる</strong>ことになります。</p>
+
+  <pre><code>Player            ← 位置と動きを持つ
+├─ Sprite2D       ← 見た目を出す
+├─ CollisionShape2D ← ぶつかる範囲
+└─ Camera2D       ← 追いかけるカメラ</code></pre>
+
+  <p>この4つで「動いて、見えて、ぶつかって、カメラが追う」プレイヤーになります。ノード単体では何もできないけれど、並べると機能になる。これがGodotの基本の考え方です。</p>
+
+  <h3>親子には意味がある</h3>
+  <p>ただの入れ物ではありません。子は親の位置を基準にして動きます。Playerを右に動かせば、中のSprite2DもCollisionShape2Dも一緒に動きます。<strong>一緒に動くものは親子にする</strong>——これが並べ方の最初の判断基準です。</p>
+
+  <div class="try"><b>やってみる</b><p>新規プロジェクトを作り、Node2Dを1つ置いて、その下にSprite2Dを追加する。Node2Dをドラッグして、Sprite2Dが付いてくることを確かめる。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

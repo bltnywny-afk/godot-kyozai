@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>27 インポート設定 — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="t2">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第5部 道具を使いこなす／インポート設定</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="t2" data-title="インポート設定">
+  <p class="eyebrow">第5部 道具を使いこなす · <b class="lno"></b> · 15分</p>
+  <h2>素材の取り込み方（インポート設定）</h2>
+  <p class="aim">この回のねらい：絵・音・文字を、意図したとおりに取り込む。</p>
+
+  <p>ファイルをプロジェクトに入れると、Godotは自動で「取り込み」を行います。<strong>その取り込み方は、あとから変えられます。</strong>ファイルを選び、シーンドックの隣の<strong>「インポート」タブ</strong>を開いてください。</p>
+
+  <div class="note"><b>変えたら「再インポート」</b><p>設定を変えただけでは反映されません。下にある<strong>「再インポート」ボタン</strong>を押して初めて効きます。「設定したのに変わらない」の大半はこれです。</p></div>
+
+  <h3>画像</h3>
+  <table class="set">
+    <tr><th>項目</th><th>ピクセルアートでの値</th></tr>
+    <tr><td>Filter</td><td>オフ（＝Nearest。にじませない）</td></tr>
+    <tr><td>Mipmaps</td><td>オフ</td></tr>
+    <tr><td>Fix Alpha Border</td><td>オン（透明の縁に黒い線が出るのを防ぐ）</td></tr>
+  </table>
+
+  <p>1枚ずつ設定するのは大変なので、<strong>1つ設定したら「デフォルトとして設定」</strong>を押してください。以降に追加する画像すべてに、その設定が使われます。ピクセルアートのプロジェクトでは最初にやっておく作業です。</p>
+
+  <h3>音</h3>
+  <ul>
+    <li><strong>BGMは <code>.ogg</code></strong> — ファイルが小さく、ループの設定が持てます。インポートタブで「ループ」をオンにします。</li>
+    <li><strong>効果音は <code>.wav</code></strong> — 再生の遅れがありません。短い音はこちら。</li>
+    <li>ループの繋ぎ目が気になるときは、インポートタブの「ループ開始位置」で調整します。</li>
+  </ul>
+
+  <h3>フォント</h3>
+  <p><code>.ttf</code> や <code>.otf</code> をプロジェクトに入れるだけで使えるようになります。ドット絵のゲームで文字をくっきりさせたいときは、インポートタブで<strong>アンチエイリアスをオフ</strong>にし、フォントサイズを実寸の整数倍にしてください。中途半端なサイズにすると輪郭がぼやけます。</p>
+
+  <div class="note"><b>日本語フォントの注意</b><p>ゲームに同梱して配布するので、<strong>ライセンスを必ず確認してください。</strong>再配布が許可されているものを選びます。フリーで使えるものとしては Noto Sans JP や源ノ角ゴシックなどがあります。</p>
+  <p>日本語フォントは文字数が多く、ファイルも大きめです。Web書き出しでは読み込み時間に効いてくるので、使う文字を絞る手もあります。</p></div>
+
+  <div class="try"><b>やってみる</b><p>画像を1枚選び、インポートタブで Filter をオフにして「デフォルトとして設定」を押す。次に入れた画像が、最初からくっきり表示されることを確認する。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

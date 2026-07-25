@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>09 ノードの3系統 — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s6">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第2部 ノードを選ぶ／ノードの3系統</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s6" data-title="ノードの3系統">
+  <p class="eyebrow">第2部 ノードを選ぶ · <b class="lno"></b> · 15分</p>
+  <h2>Node / Node2D / Control の3系統</h2>
+  <p class="aim">この回のねらい：数百あるノードを3つに分類して見られるようにする。</p>
+
+  <p>ノードの一覧を初めて開くと数が多くて絶望しますが、2Dゲームで使うものは大きく3系統です。</p>
+
+  <table>
+    <tr><th>系統</th><th>持っているもの</th><th>使いどころ</th></tr>
+    <tr><td><code>Node</code></td><td>何も持たない</td><td>ただのまとめ役、ロジックだけの入れ物</td></tr>
+    <tr><td><code>Node2D</code></td><td>位置・回転・拡大</td><td>ゲーム世界に置くものすべて</td></tr>
+    <tr><td><code>Control</code></td><td>矩形とアンカー</td><td>UI。画面サイズに合わせて伸縮する</td></tr>
+  </table>
+
+  <p>見分け方は簡単で、<strong>ワールド座標で置きたいならNode2D系、画面の隅に貼り付けたいならControl系</strong>です。体力バーを敵の頭上に出すならNode2D系、画面左上に固定するならControl系。</p>
+
+  <h3>まとめ役としてのNode</h3>
+  <p>位置を持たないので、整理のためだけに使えます。</p>
+  <pre><code>Level
+├─ Terrain     (Node2D)
+├─ Enemies     (Node)   ← 敵をまとめるだけ
+│  ├─ Enemy
+│  └─ Enemy
+└─ Items       (Node)</code></pre>
+  <p>こうしておくと、敵を全部消したいときに <code>Enemies</code> の子を消すだけで済みます。</p>
+
+  <div class="try"><b>やってみる</b><p>ノード追加ダイアログを開き、検索欄に <code>2D</code> と入れる。出てくるノードの名前を眺めるだけでよい。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

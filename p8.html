@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>B8 経営シミュレーション — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="p8">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第6部 実践 — 9本を作る／経営シミュレーション</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="p8" data-kind="build" data-sketch="1" data-title="経営シミュレーション">
+  <p class="eyebrow">実践 B8 · 設計メモ</p>
+  <h2>経営シミュレーション</h2>
+  <p class="aim">新しく覚える：時間進行の管理／大量データをResourceで持つ／表主体のUI／数値バランスの詰め方。</p>
+
+  <div class="sketch"><b>この章は設計メモです</b><p>B1〜B6と違い、ここは<strong>手順書ではなく方針書</strong>です。構成と考え方の要点だけを置いてあります。B6まで作り終えて、実際に取りかかる段になったら、そのとき詳細版を用意してください。先に書いても、そのころには自分の判断で作れるようになっているはずです。</p></div>
+
+  <p>アクション性はありませんが、別の難しさがあります。<strong>要素が増えるほど互いに影響し合う</strong>ため、設計が甘いと途中で手が入れられなくなります。B4でやったデータとロジックの分離が、ここで本番を迎えます。</p>
+
+  <h3>構成 — ロジックはUIを知らない</h3>
+  <pre><code>Main
+├─ SimClock (Node)       ← 1日／1週を進める
+├─ Economy (Node)        ← 収支の計算。画面のことを一切知らない
+└─ UI (CanvasLayer)
+   ├─ TabContainer
+   │  ├─ 概要 / 商品 / 従業員 / 施設
+   └─ DayEndPanel
+
+Autoload: SaveManager</code></pre>
+
+  <p><code>Economy</code> は計算して <code>day_ended(report)</code> のようなシグナルを出すだけ。UIはそれを受けて表示を更新します。この向き（<a class="xref" data-ref="s13" href="s13.html">第13回</a>）を守ると、UIを全部作り直しても計算部分は無傷で残ります。</p>
+
+  <h3>商品や施設はResourceで</h3>
+  <pre><code>class_name ItemData extends Resource
+
+@export var name: String
+@export var cost: int
+@export var price: int
+@export var popularity: float</code></pre>
+
+  <p>これで商品1つが1ファイルになります。増やすのも、バランス調整も、エディタ上でできます。コードに数値を直接書くと、調整のたびに再起動することになります。</p>
+
+  <h3>作る順番</h3>
+  <ul>
+    <li>1. ボタンを押すと1日進み、収支が表示されるだけのもの</li>
+    <li>2. 商品を1種類。仕入れて売る</li>
+    <li>3. 商品を複数に。ItemDataをResource化</li>
+    <li>4. 従業員か施設のどちらか一方だけ足す</li>
+    <li>5. セーブとロード</li>
+    <li>6. 最後に数値バランス</li>
+  </ul>
+
+  <div class="note"><b>詰まりやすい点</b><p>バランスは机上では決まりません。<strong>先に作って、遊んでから決める</strong>ものです。最初から緻密な経済モデルを設計しようとすると、たいてい1画面も動かないまま終わります。</p></div>
+
+  <div class="try"><b>完成の目安</b><p>10日間プレイして、やり方次第で黒字にも赤字にもなる。判断に意味が生まれたら完成です。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

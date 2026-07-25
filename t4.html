@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>29 音を整える — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="t4">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第5部 道具を使いこなす／音を整える</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="t4" data-title="音を整える">
+  <p class="eyebrow">第5部 道具を使いこなす · <b class="lno"></b> · 15分</p>
+  <h2>音を整える — オーディオバス</h2>
+  <p class="aim">この回のねらい：BGMと効果音を別々に管理し、音量を設定できるようにする。</p>
+
+  <p>音を鳴らすノードは<a class="xref" data-ref="s10" href="s10.html">第10回</a>で扱いました。ここでは<strong>全体の音量をどう管理するか</strong>です。</p>
+
+  <h3>バスを分ける</h3>
+  <p>下パネルの<strong>「オーディオ」タブ</strong>を開くと、<code>Master</code> というバスが1本あります。ここに <code>BGM</code> と <code>SE</code> を追加します。</p>
+
+  <ul>
+    <li>「バスを追加」を2回押し、名前を <code>BGM</code> と <code>SE</code> にする</li>
+    <li>それぞれの出力先を <code>Master</code> にする</li>
+    <li>AudioStreamPlayer のインスペクタで、<code>Bus</code> を <code>BGM</code> か <code>SE</code> に設定する</li>
+  </ul>
+
+  <p>これで、BGMだけ音量を下げる・効果音だけ消すといった操作ができるようになります。</p>
+
+  <h3>設定画面から音量を変える</h3>
+  <pre><code>func set_bgm_volume(value: float) -> void:
+    # value は 0.0〜1.0
+    var bus := AudioServer.get_bus_index("BGM")
+    AudioServer.set_bus_volume_db(bus, linear_to_db(value))</code></pre>
+
+  <div class="note"><b>音量は dB で持っている</b><p>Godotの音量は<strong>デシベル</strong>です。0が原寸、マイナスで小さくなり、-80 でほぼ無音。スライダーの 0〜1 とは尺度が違うので、<code>linear_to_db()</code> で変換します。これを知らないと「スライダーを半分にしたのに、ほとんど小さくならない」ことになります。</p></div>
+
+  <h3>同じ音を重ねて鳴らす</h3>
+  <p>コインを連続で取ったとき、音が途切れて聞こえることがあります。AudioStreamPlayer の <code>Max Polyphony</code> を 4〜8 に上げると、重ねて鳴らせるようになります。</p>
+
+  <h3>効果音を用意するときの実際</h3>
+  <ul>
+    <li>フリー素材を使うなら、<strong>商用利用とクレジット表記の条件を確認</strong>する</li>
+    <li>自分で作るなら <code>jsfxr</code> のようなレトロ効果音生成ツールが手軽</li>
+    <li>音量は素材ごとにバラバラなので、<strong>ゲーム内で揃える</strong>（AudioStreamPlayer の Volume dB）</li>
+  </ul>
+
+  <div class="try"><b>やってみる</b><p>BGM と SE のバスを作り、既存の AudioStreamPlayer を振り分ける。オーディオタブでBGMのつまみだけ下げて、効果音の音量が変わらないことを確認する。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>25 詰まったときの直し方 — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s20">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第4部 画面を作る／詰まったときの直し方</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s20" data-title="詰まったときの直し方">
+  <p class="eyebrow">第4部 画面を作る · <b class="lno"></b> · 15分</p>
+  <h2>詰まったときの調べ方・直し方</h2>
+  <p class="aim">この回のねらい：一人でも前に進める手順を持つ。</p>
+
+  <p>基礎の最後は、知識ではなく手順です。動かないときに開く場所を順番で決めておくと、詰まっている時間が短くなります。</p>
+
+  <h3>順番</h3>
+  <ul>
+    <li><strong>1. 下パネルの「出力」を見る</strong> — エラー行が出ていれば、そこがほぼ原因。</li>
+    <li><strong>2. 「デバッガ」タブを見る</strong> — スタックトレースで、どの関数から来たか分かる。</li>
+    <li><strong>3. 実行中に「リモート」シーンツリーを見る</strong> — シーンドックの上部で <code>ローカル / リモート</code> を切り替えると、<strong>実行中の実際のノードの状態</strong>が見えます。値が想定と違えば原因はその手前。</li>
+    <li><strong>4. <code>print</code> を挟む</strong> — 疑わしい関数の頭に入れて、そもそも呼ばれているか確認する。</li>
+  </ul>
+
+  <div class="note"><b>リモートツリーは強力</b><p>「動かない」の半分は、想定と違う値が入っているか、そもそもノードが生成されていないかです。リモートツリーはこの両方を一度に確認できます。使い方を覚えると独学の効率が大きく変わります。</p></div>
+
+  <h3>公式ドキュメントの引き方</h3>
+  <p>エディタ内で <strong>F1</strong>（またはヘルプ検索）を押すと、クラス一覧を検索できます。<code>CharacterBody2D</code> と入れれば、そのノードが持つプロパティ・メソッド・シグナルが全部並びます。<strong>Web検索より先にここを引く</strong>のを癖にしてください。Godot 4は情報が変わっているので、古い記事より正確です。</p>
+
+  <h3>ここから先へ</h3>
+  <p>読む回をひととおり終えたら、小さいゲームを1本完成させてください。設計済みの企画に飛びつくより、<strong>1画面で終わるもの</strong>を作り切るほうが力になります。完成の経験が1つあると、大きい企画の進め方が自然に見えるようになります。</p>
+
+  <div class="try"><b>やってみる</b><p>実行中にシーンドックを「リモート」に切り替え、プレイヤーの <code>position</code> がリアルタイムで変わるのを眺める。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

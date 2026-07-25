@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>08 GDScriptの読み方 — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="g2">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第1部 GODOTの地図／GDScriptの読み方</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="g2" data-title="GDScriptの読み方">
+  <p class="eyebrow">第1部 GODOTの地図 · <b class="lno"></b> · 15分</p>
+  <h2>GDScriptの読み方 — 最低限の文法</h2>
+  <p class="aim">この回のねらい：この教材のコードを「読める」ようにする。書けるようになるのは、写しているうちでよい。</p>
+
+  <p>文法を全部覚える必要はありません。<strong>教材に出てくる形だけ</strong>、意味が分かるようにしておきます。分からなくなったらこの回に戻ってください。</p>
+
+  <h3>変数 — 値の入れもの</h3>
+  <pre><code>var score := 0          # 変わる値。:= は「型は右辺から察して」の意味
+const SPEED := 60.0     # 変わらない値。調整用の数値はこれで持つ
+var name: String = ""   # 型を自分で書く形。どちらでもよい</code></pre>
+  <p><code>#</code> から行末まではコメント（メモ）で、実行されません。<code>60.0</code> のように小数点を付けると小数、付けないと整数です。</p>
+
+  <h3>関数 — 処理のまとまり</h3>
+  <pre><code>func take_damage(amount: int) -> void:
+    hp -= amount
+    if hp &lt;= 0:
+        die()</code></pre>
+  <p>読み方：「<code>take_damage</code> という名前の処理。整数 <code>amount</code> を受け取る。<code>-> void</code> は返す値がないという意味」。呼ぶときは <code>take_damage(1)</code> と書きます。</p>
+
+  <h3>if と match — 分かれ道</h3>
+  <pre><code>if hp &lt;= 0:
+    die()
+elif hp &lt; 3:
+    warn()
+else:
+    pass            # 何もしない
+
+match state:        # 値によって分岐。if の連続より読みやすい
+    State.MOVE:
+        walk()
+    State.ATTACK:
+        swing()</code></pre>
+
+  <h3>ノードを触る記号</h3>
+  <p><code>$</code> と <code>%</code> と <code>@onready</code> の詳しい使い分けは<a class="xref" data-ref="s14" href="s14.html">第14回</a>でやります。ここでは読めれば十分です。</p>
+  <pre><code>$Sprite2D.hide()                    # $ = 子ノードを名前で取る
+%HealthBar.value = hp               # % = どこにいても届く特別な名前
+
+@onready var sprite: Sprite2D = $Sprite2D
+# ↑ 子ノードを変数に入れるときのお決まりの形。@onready を付けないと
+#   子が用意される前に取ろうとして失敗します</code></pre>
+
+  <h3>その他、教材に出てくるもの</h3>
+  <table>
+    <tr><th>書き方</th><th>意味</th></tr>
+    <tr><td><code>enum State { MOVE, ATTACK }</code></td><td>状態の選択肢に名前を付ける</td></tr>
+    <tr><td><code>signal hit</code> / <code>hit.emit()</code></td><td>「起きた」と知らせる仕組み（<a class="xref" data-ref="s13" href="s13.html">第13回</a>）</td></tr>
+    <tr><td><code>@export var speed := 60.0</code></td><td>インスペクタから値を変えられるようにする</td></tr>
+    <tr><td><code>await なにか</code></td><td>それが終わるまで、この関数の続きを待つ</td></tr>
+    <tr><td><code>for c in list:</code></td><td>list の中身を1つずつ取り出して繰り返す</td></tr>
+    <tr><td><code>Vector2(160, 90)</code></td><td>xとyの2つの数の組。位置や速度に使う</td></tr>
+  </table>
+
+  <div class="note"><b>覚えようとしないでください</b><p>この回は<strong>辞書</strong>です。実践編でコードを写しながら「これ何だっけ」となったら戻ってくる。それを何度か繰り返すうちに、戻らなくても読めるようになっています。それで十分です。</p></div>
+
+  <div class="try"><b>やってみる</b><p>前回のスクリプトに <code>var count := 0</code> を足し、<code>_process</code> の中で <code>count += 1</code> して print する。数字が増え続けることを確認する。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>28 テーマとフォント — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="t3">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第5部 道具を使いこなす／テーマとフォント</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="t3" data-title="テーマとフォント">
+  <p class="eyebrow">第5部 道具を使いこなす · <b class="lno"></b> · 15分</p>
+  <h2>UIの見た目を揃える — Theme</h2>
+  <p class="aim">この回のねらい：ボタンやラベルの見た目を、1か所で管理する。</p>
+
+  <p>ボタンを10個置いて、1つずつ色とフォントを設定していくと、あとで変えたくなったとき10か所直すことになります。<strong>Theme はその設定をまとめて持つリソース</strong>です。</p>
+
+  <h3>作り方</h3>
+  <ul>
+    <li>いちばん上の Control ノードを選ぶ</li>
+    <li>インスペクタの <code>Theme</code> で「新規 Theme」を作る</li>
+    <li>下パネルに現れる「テーマ」タブを開く</li>
+    <li>「型を追加」で <code>Button</code> や <code>Label</code> を足し、フォント・文字サイズ・色を決める</li>
+  </ul>
+
+  <p><strong>Theme は子孫すべてに効きます。</strong>いちばん上に1つ割り当てておけば、その下のボタンもラベルも全部そのデザインになります。</p>
+
+  <h3>1つだけ違うものにしたいとき</h3>
+  <p>そのノードのインスペクタにある <strong>Theme Overrides</strong> で、個別に上書きできます。ただし多用すると Theme の意味が薄れるので、<strong>「基本は Theme、例外だけ Overrides」</strong>と決めておくのがよいです。</p>
+
+  <p>「大きいボタン」のような種類を作りたいときは、Theme の中で <strong>Theme Type Variation</strong> を使います。Button を元にした派生を作り、ノード側でその名前を指定します。</p>
+
+  <div class="note"><b>幼児向けでは特に効きます</b><p>B4のような幼児向けUIでは、ボタンを大きく、文字を太く、間隔を広くする必要があります。これを Theme に一度書いておけば、あとから「もう少し大きく」と調整するのが一瞬で済みます。<strong>実機で子どもに触らせると必ず調整したくなる</strong>ので、この仕組みを先に用意しておくと楽です。</p></div>
+
+  <h3>9スライス</h3>
+  <p>ボタンの背景に絵を使うとき、そのまま引き伸ばすと角が歪みます。<code>StyleBoxTexture</code> の<strong>9スライス</strong>を使うと、角はそのまま・辺だけが伸びる形になります。枠や吹き出しを作るときの必須知識です。</p>
+
+  <div class="try"><b>やってみる</b><p>Control に Theme を作り、Button の文字サイズを大きくする。同じ画面の他のボタンも一緒に変わることを確認する。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

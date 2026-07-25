@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>01 Godotを用意する — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s0">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第1部 GODOTの地図／Godotを用意する</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s0" data-title="Godotを用意する">
+  <p class="eyebrow">第1部 GODOTの地図 · <b class="lno"></b> · 15分</p>
+  <h2>Godotを用意して、動かすところまで</h2>
+  <p class="aim">この回のねらい：インストールして、空のプロジェクトを実行できるところまで。</p>
+
+  <h3>手に入れる</h3>
+  <ul>
+    <li>公式サイト <strong>godotengine.org</strong> からダウンロードします。無料です</li>
+    <li>選ぶのは <strong>Godot 4 系の「Godot Engine」</strong>。「.NET版」というものもありますが、<strong>そちらではない普通のほう</strong>を選んでください（.NET版はC#という別の言語用です）</li>
+    <li>インストール作業はなく、<strong>ダウンロードしたファイルを解凍して実行するだけ</strong>で起動します</li>
+  </ul>
+
+  <div class="note"><b>バージョンについて</b><p>この教材は <strong>Godot 4</strong> 向けです。検索で出てくる古い記事は Godot 3 のものが多く、書き方がかなり違います。<strong>始めたときのバージョンをメモしておき、制作中は上げない</strong>のが安全です（詳しくは第5部で扱います）。</p></div>
+
+  <h3>プロジェクトを作る</h3>
+  <p>起動すると最初に出るのは<strong>プロジェクトマネージャー</strong>という一覧画面です。ここでプロジェクト（＝ゲーム1本ぶんのフォルダ）を選んだり作ったりします。</p>
+  <ul>
+    <li>「新規」を押す</li>
+    <li>プロジェクト名を入れる（あとで変えられます。<code>test1</code> などで構いません）</li>
+    <li>保存場所を選ぶ。<strong>日本語やスペースを含まないパス</strong>が無難です（例：<code>C:\godot\test1</code>）</li>
+    <li>レンダラーはそのまま（既定のまま）でよい</li>
+    <li>「作成して編集」を押す</li>
+  </ul>
+  <p>エディタが開けば成功です。画面の見方は<a class="xref" data-ref="s4" href="s4.html">第4回</a>でやるので、いまは分からなくて構いません。</p>
+
+  <h3>実行してみる</h3>
+  <p>ゲームは<strong>F5</strong>で実行します。いまは空っぽなので、押すと「メインシーンが選ばれていません」と聞かれます。<strong>これは正常です。</strong>まだ何も作っていないだけです。キャンセルして戻ってください。</p>
+
+  <table class="set">
+    <tr><th>キー</th><th>意味</th></tr>
+    <tr><td><code>F5</code></td><td>ゲーム全体を実行する</td></tr>
+    <tr><td><code>F6</code></td><td>いま開いているシーンだけ実行する</td></tr>
+    <tr><td><code>F8</code></td><td>実行を止める</td></tr>
+  </table>
+
+  <p>この3つは今後ずっと使います。<strong>実行 → 確認 → 直す</strong>の往復がゲーム作りの基本の動きです。</p>
+
+  <div class="try"><b>やってみる</b><p>Godotをダウンロードして起動し、プロジェクトを1つ作ってエディタを開く。F5を押して「メインシーンが選ばれていません」が出ることを確認する（それで正解です）。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>21 シーン切り替え — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s16">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第4部 画面を作る／シーン切り替え</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s16" data-title="シーン切り替え">
+  <p class="eyebrow">第4部 画面を作る · <b class="lno"></b> · 15分</p>
+  <h2>メインシーンとシーン切り替え</h2>
+  <p class="aim">この回のねらい：タイトルからゲームへ、の流れを作る。</p>
+
+  <p>起動時に最初に開くシーンは<strong>プロジェクト設定 → アプリケーション → 実行 → メインシーン</strong>で決めます。最初にF5を押したときに聞かれるのがこれです。</p>
+
+  <h3>切り替える</h3>
+  <pre><code>get_tree().change_scene_to_file("res://scenes/level_1.tscn")</code></pre>
+  <p>いま開いているシーンは破棄され、新しいシーンに入れ替わります。前のシーンの状態は残らないので、持ち越したいものは前回のAutoloadに置きます。</p>
+
+  <h3>読み込みを事前に済ませる</h3>
+  <pre><code>@export var next_scene: PackedScene
+
+func go() -> void:
+    get_tree().change_scene_to_packed(next_scene)</code></pre>
+  <p>ファイルパスの文字列は、ファイルを移動すると壊れます。<code>@export</code> でシーンを指定する形なら、エディタが参照を追従してくれます。</p>
+
+  <div class="note"><b>切り替えないという選択</b><p>ポーズ画面やインベントリは、シーンを切り替えるのではなく <strong>CanvasLayerを上に足して被せる</strong>ほうが簡単です。<code>get_tree().paused = true</code> と、UI側の <code>Process Mode</code> を <code>Always</code> にする組み合わせで作れます。</p></div>
+
+  <div class="try"><b>やってみる</b><p>タイトル用のシーンを作り、ボタンを1つ置いて、押したらレベルへ切り替わるようにする。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

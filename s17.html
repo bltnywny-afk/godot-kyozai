@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>22 描画の重なり順 — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s17">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第4部 画面を作る／描画の重なり順</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s17" data-title="描画の重なり順">
+  <p class="eyebrow">第4部 画面を作る · <b class="lno"></b> · 15分</p>
+  <h2>描画の重なり順</h2>
+  <p class="aim">この回のねらい：「隠れて見えない」を自力で直せるようにする。</p>
+
+  <p>2Dの重なりは、優先度の高い順に次の3つで決まります。</p>
+
+  <ul>
+    <li><strong>CanvasLayer</strong> — レイヤー番号が大きいほど手前。UIを最前面にする用。</li>
+    <li><strong>z_index</strong> — 同じレイヤー内での前後。背景は負、エフェクトは正。</li>
+    <li><strong>シーンドックの並び順</strong> — 同じ z_index なら、<strong>下にあるノードほど手前</strong>に描かれます。</li>
+  </ul>
+
+  <p>3つ目を知らないと延々悩みます。何も設定していないのに絵が隠れるときは、シーンドックでノードを下にドラッグしてみてください。</p>
+
+  <h3>見下ろし型で足元の前後を出す</h3>
+  <p>キャラが木の後ろに回ったら隠れてほしい、という表現は <strong>Y Sort</strong> で作ります。親ノード（TileMapLayerや、キャラをまとめているNode2D）のインスペクタで <code>Y Sort Enabled</code> をオンにすると、Y座標が大きい＝画面下にあるものほど手前に描かれます。</p>
+
+  <div class="note"><b>あわせて調整</b><p>Y Sortを使うときは、スプライトの原点を<strong>足元</strong>に合わせておきます。Sprite2Dの <code>Offset</code> で画像を上にずらすと、キャラの足の位置でソートされて自然になります。</p></div>
+
+  <div class="try"><b>やってみる</b><p>2つのSprite2Dを重ねて置き、シーンドックで上下の順番を入れ替えて、手前に来るほうが変わることを確認する。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

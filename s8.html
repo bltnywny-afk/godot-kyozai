@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>13 ぶつかるノード — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s8">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第2部 ノードを選ぶ／ぶつかるノード</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s8" data-title="ぶつかるノード">
+  <p class="eyebrow">第2部 ノードを選ぶ · <b class="lno"></b> · 15分</p>
+  <h2>ぶつかるノード</h2>
+  <p class="aim">この回のねらい：当たり判定の4種類を役割で選べるようにする。</p>
+
+  <table>
+    <tr><th>ノード</th><th>役割</th></tr>
+    <tr><td><code>Area2D</code></td><td>重なりを検知するだけ。押し返さない。</td></tr>
+    <tr><td><code>StaticBody2D</code></td><td>動かない壁・床。</td></tr>
+    <tr><td><code>CharacterBody2D</code></td><td>自分でコードで動かすキャラ。</td></tr>
+    <tr><td><code>RigidBody2D</code></td><td>物理法則で勝手に動く物体。</td></tr>
+  </table>
+
+  <p>迷ったときの判断は<strong>「押し返したいか、気づきたいだけか」</strong>です。壁にめり込ませたくないなら Body 系、アイテム取得やダメージ判定のように<em>触れたことを知りたいだけ</em>なら Area2D。</p>
+
+  <h3>形は必ず子に付ける</h3>
+  <p>これらのノードは判定の形を自分では持っていません。子に <code>CollisionShape2D</code> を付けて、インスペクタの <code>Shape</code> に矩形や円を割り当てて初めて機能します。</p>
+
+  <pre><code>Player (CharacterBody2D)
+├─ Sprite2D
+├─ CollisionShape2D   ← これが無いと素通りする
+└─ Area2D             ← 攻撃判定などは別に持たせる
+   └─ CollisionShape2D</code></pre>
+
+  <div class="note"><b>よくあるエラー</b><p>「Node configuration warning」の三角マークが出たら、たいてい CollisionShape2D が無いか、Shape が空です。マークにカーソルを合わせると理由が読めます。</p></div>
+
+  <div class="try"><b>やってみる</b><p>Area2D＋CollisionShape2D を置き、インスペクタの Shape で新規 RectangleShape2D を作る。三角マークが消えることを確認する。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

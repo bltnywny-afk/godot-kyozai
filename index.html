@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>ノードの木 — Godot 4 ゲームづくり入門</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="dash">
+<div class="dash">
+  <h1>ノードの木</h1>
+  <p class="sub">ゲームの作り方と Godot 4 の使い方を、まったくの初めてから。読む回は1回15分。第1〜4部を1日1回で約1か月、そのあと実践編B1へ。第5部は道具箱なので、必要になったときに開けば足ります。</p>
+
+  <div class="dprog">
+    <div class="prow"><span class="lbl">読む</span><span class="bar"><i id="bar1"></i></span><span class="num" id="n1">–</span></div>
+    <div class="prow"><span class="lbl">作る</span><span class="bar"><i class="b2" id="bar2"></i></span><span class="num" id="n2">–</span></div>
+    <button class="resume" id="resume">続きから →</button>
+  </div>
+
+  <div class="dtools">
+    <button id="themebtn">◐ 配色</button>
+    <button id="syncbtn">⇄ 別の端末と同期</button>
+  </div>
+  <div class="syncbox" id="syncbox" style="margin:-22px 0 30px">
+    <p>この端末の進捗を文字列にします。もう一方の端末で貼り付けて「読み込む」を押してください。読み込んだ側の進捗は上書きされます。</p>
+    <textarea id="synctext" spellcheck="false" placeholder="ここに同期コードが出ます"></textarea>
+    <div class="syncrow">
+      <button id="syncout">書き出す</button>
+      <button id="synccopy">コピー</button>
+      <button id="syncin">読み込む</button>
+    </div>
+    <p class="syncmsg" id="syncmsg"></p>
+  </div>
+
+  <div id="parts"></div>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>14 UIのノード — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s9">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第2部 ノードを選ぶ／UIのノード</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s9" data-title="UIのノード">
+  <p class="eyebrow">第2部 ノードを選ぶ · <b class="lno"></b> · 15分</p>
+  <h2>UIのノード</h2>
+  <p class="aim">この回のねらい：UIをゲーム世界から切り離して置く。</p>
+
+  <p>UIで最初に覚えるべきは <code>CanvasLayer</code> です。これの子になったものは<strong>カメラの影響を受けません</strong>。カメラが動いても画面に貼り付いたままになります。</p>
+
+  <pre><code>Level
+├─ Player
+├─ Camera2D
+└─ HUD (CanvasLayer)
+   └─ MarginContainer
+      └─ HBoxContainer
+         ├─ Label       "HP"
+         └─ ProgressBar</code></pre>
+
+  <h3>並べるのはコンテナに任せる</h3>
+  <p>UIを座標で1つずつ置くと、画面サイズが変わった瞬間に崩れます。<code>VBoxContainer</code>（縦並び）、<code>HBoxContainer</code>（横並び）、<code>MarginContainer</code>（余白）に入れておけば自動で整列します。</p>
+
+  <h3>アンカーとプリセット</h3>
+  <p>Controlノードを選ぶと、2Dビューの上部に「アンカープリセット」ボタンが出ます。ここで「右上」「画面全体に広げる」などを選ぶと、解像度が変わっても位置が保たれます。手で座標を打つ前に必ずここを見てください。</p>
+
+  <div class="try"><b>やってみる</b><p>CanvasLayer → Label を作り、アンカープリセットで「左上」を選ぶ。ウィンドウサイズを変えても左上に残ることを確認する。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

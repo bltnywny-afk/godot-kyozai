@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>19 ノードの参照方法 — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="s14">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第3部 ノードをつなぐ／ノードの参照方法</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="s14" data-title="ノードの参照方法">
+  <p class="eyebrow">第3部 ノードをつなぐ · <b class="lno"></b> · 15分</p>
+  <h2>ノードの参照方法</h2>
+  <p class="aim">この回のねらい：壊れにくい書き方を選ぶ。</p>
+
+  <p>他のノードを触るための書き方が何通りかあり、どれを選ぶかで壊れやすさが変わります。</p>
+
+  <table>
+    <tr><th>書き方</th><th>使いどころ</th></tr>
+    <tr><td><code>$Sprite2D</code></td><td>すぐ下の子。短くて読みやすい。</td></tr>
+    <tr><td><code>%HealthBar</code></td><td>深い階層の子。位置を変えても壊れない。</td></tr>
+    <tr><td><code>@export var target: Node2D</code></td><td>別シーンのノード。エディタで指定する。</td></tr>
+  </table>
+
+  <h3>%（ユニーク名）の作り方</h3>
+  <p>シーンドックでノードを右クリックし、<strong>「シーン内でユニークな名前でアクセス」</strong>を選びます。名前の横に <code>%</code> が付き、階層のどこにあっても <code>%名前</code> で呼べるようになります。<code>$UI/Panel/VBox/HealthBar</code> のような長いパスは、階層を1つ変えた瞬間に壊れます。深いものは全部これにしてください。</p>
+
+  <h3>@onready を付ける理由</h3>
+  <pre><code>@onready var sprite: Sprite2D = $Sprite2D</code></pre>
+  <p>変数の初期化は子ノードが用意される前に走ります。<code>@onready</code> を付けると「子が揃ってから代入」になります。付け忘れると <code>null</code> エラーになるので、ノードを変数に入れるときは反射的に付けてください。</p>
+
+  <div class="note"><b>やらないほうがいい</b><p><code>get_node("../../Player")</code> のように上に遡るパス。親の構造に依存するので、シーンを別の場所に置いた瞬間に壊れます。上のものが必要なときは <code>@export</code> かシグナルにします。</p></div>
+
+  <div class="try"><b>やってみる</b><p>深い階層にLabelを置き、ユニーク名を設定して <code>%Label.text = "test"</code> で書き換える。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

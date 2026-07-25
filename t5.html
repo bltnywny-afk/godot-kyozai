@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>30 スクリプトエディタとデバッグ — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="t5">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第5部 道具を使いこなす／スクリプトエディタとデバッグ</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="t5" data-title="スクリプトエディタとデバッグ">
+  <p class="eyebrow">第5部 道具を使いこなす · <b class="lno"></b> · 15分</p>
+  <h2>スクリプトエディタとデバッグの道具</h2>
+  <p class="aim">この回のねらい：<code>print</code> だけに頼らず、中身を覗けるようにする。</p>
+
+  <h3>書くときに効く操作</h3>
+  <table class="set">
+    <tr><th>やりたいこと</th><th>操作</th></tr>
+    <tr><td>候補を出す</td><td>打っていれば自動。出ないときは <code>Ctrl</code>+<code>Space</code></td></tr>
+    <tr><td>関数や変数の定義へ飛ぶ</td><td><code>Ctrl</code> を押しながらクリック</td></tr>
+    <tr><td>クラスの説明を読む</td><td><code>F1</code> で検索</td></tr>
+    <tr><td>このファイル内を検索</td><td><code>Ctrl</code>+<code>F</code></td></tr>
+    <tr><td>プロジェクト全体を検索</td><td><code>Ctrl</code>+<code>Shift</code>+<code>F</code></td></tr>
+    <tr><td>行を複製</td><td><code>Ctrl</code>+<code>D</code></td></tr>
+    <tr><td>コメントの切り替え</td><td><code>Ctrl</code>+<code>K</code></td></tr>
+  </table>
+
+  <p><strong><code>Ctrl</code>+クリックで定義へ飛べる</strong>のを覚えておくと、他人のコードも自分の過去のコードも一気に読みやすくなります。</p>
+
+  <h3>止めて中身を見る</h3>
+  <p><code>print</code> を並べるのは手軽ですが、変数が増えると追えなくなります。<strong>ブレークポイント</strong>を使うと、その行で実行が止まり、そのときの変数をすべて見られます。</p>
+
+  <ul>
+    <li>行番号の左をクリックすると赤い点が付く（<code>F9</code> でも切り替え）</li>
+    <li>実行してその行に来ると止まる</li>
+    <li>下パネルの<strong>「デバッガ」</strong>に、そのときの変数の中身が全部出る</li>
+    <li>上部のボタンで、1行ずつ進める・関数の中に入る・続きを実行する、が選べる</li>
+  </ul>
+
+  <div class="note"><b>使いどころ</b><p>「なぜかこの条件を通らない」ときが出番です。<code>if</code> の行にブレークポイントを置き、実際の値を見れば一発で分かります。<strong><code>print</code> を5個書くより速い</strong>ことが多いです。</p></div>
+
+  <h3>実行中の様子を見る</h3>
+  <ul>
+    <li><strong>リモートツリー</strong>（シーンドックの「リモート」）— いま存在するノードと、その値</li>
+    <li><strong>モニター</strong>（デバッガのタブ）— FPS、描画の回数、メモリ、ノードの数。<strong>ノード数が増え続けていたら、消し忘れです。</strong></li>
+    <li><strong>プロファイラ</strong>— どの関数が時間を食っているか。動作が重いときに開く</li>
+  </ul>
+
+  <h3>エラーの読み方</h3>
+  <p>出力パネルの赤い行を<strong>クリックすると該当行へ飛びます。</strong>まずそこを見てください。よく出るものを挙げておきます。</p>
+
+  <table>
+    <tr><th>メッセージの趣旨</th><th>だいたいの原因</th></tr>
+    <tr><td>null のインスタンスで呼ぼうとした</td><td>ノードが取れていない。<code>@onready</code> 忘れ、パス間違い</td></tr>
+    <tr><td>すでに解放されたオブジェクト</td><td><code>queue_free()</code> したものを、まだ触っている</td></tr>
+    <tr><td>識別子が見つからない</td><td>綴り間違い、または <code>class_name</code> を書いた直後で未保存</td></tr>
+    <tr><td>信号がすでに接続されている</td><td>エディタとコードの両方で接続している</td></tr>
+  </table>
+
+  <div class="try"><b>やってみる</b><p>適当な関数にブレークポイントを置いて実行し、デバッガで変数の値を確認する。次にモニターを開き、遊んでいる間にノード数が増え続けないかを見る。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

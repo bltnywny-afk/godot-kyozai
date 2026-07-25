@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>B6 アクションRPG — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="p6">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第6部 実践 — 9本を作る／アクションRPG</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="p6" data-kind="build" data-title="アクションRPG" data-file="player.gd">
+  <p class="eyebrow">実践 B6 · 全11ステップ · 規模：6〜8週間</p>
+  <h2>探索とダンジョン — ゼルダ1風アクションRPG</h2>
+  <p class="aim">新しく覚える：ステートマシン／向きの管理とY-sort／画面単位のカメラ／会話システム／鍵と扉／セーブとロード。</p>
+
+  <div class="note"><b>この章の位置づけ</b>
+  <p>見下ろし型の探索アクション。剣を振り、村人と話し、鍵を見つけて扉を開け、ダンジョンに潜る。<strong>ゼルダ1のように、画面が1つずつ切り替わる</strong>作りにします。</p>
+  <p>ここで覚える<strong>マップ間の移動・会話・所持品・セーブ</strong>は、そのままB5の和風アクションに町パートを足す材料になります。2本が揃うと、ゴエモンのような「町を歩いて手形を手に入れ、道中へ出る」構造が組めます。</p></div>
+
+  <div class="note"><b>この章がいちばん重い理由</b><p>B5までは「新しい仕組みが増える」章でした。この章は<strong>仕組み同士が絡み合う</strong>章です。会話中は歩けない、攻撃中は向きを変えられない、被弾中は入力を受けない。この交通整理ができないと、どこを触っても他が壊れるようになります。だからSTEP 4のステートマシンが、この章の心臓部です。</p></div>
+
+  <h3>作るものを先に決める</h3>
+  <div class="spec">
+    <p><strong>ゼルダ1風の探索アクション。</strong></p>
+    <p>見下ろし視点。8方向に歩き、剣を振って敵を倒す。画面の端まで行くと、次の画面へカメラがスライドする。</p>
+    <p>村人に話しかけるとヒントをくれる。鍵を拾い、鍵のかかった扉を開けてダンジョンへ。ダンジョンの中も同じ仕組みで進む。</p>
+    <p>セーブポイントで記録すると、次に起動したとき続きから遊べる。お店や買い物はない。</p>
+  </div>
+
+  <h3>この章の考え方の芯</h3>
+  <div class="note"><b>3つ</b>
+    <p><strong>1. 状態は1つの変数で持ち、処理を <code>match</code> で分ける。</strong>「攻撃中フラグ」「会話中フラグ」「無敵フラグ」を並べると、攻撃中かつ会話中という有り得ない状態が作れてしまいます。<strong>同時に1つしか成立しないものは、enum1つにまとめます。</strong></p>
+    <p><strong>2. 向きは1か所で持つ。</strong><code>facing</code> という変数ひとつを、アニメーションの選択にも剣の判定の回転にも使います。別々に持つと必ずずれます。</p>
+    <p><strong>3. 世界に起きた変化は Autoload に記録する。</strong>開けた扉、拾った鍵、倒したボス。これらを部屋のシーンが持っていると、部屋を出入りするたびに元に戻ります。<strong>永続する事実は GameState に置く</strong>と決めてください。</p>
+  </div>
+
+  <h3>ノード構成（完成形）</h3>
+  <pre><code>overworld.tscn
+World (Node2D)                     ← level.gd
+├─ Ground (TileMapLayer)
+├─ Walls  (TileMapLayer)
+├─ Entities (Node2D)   ← Y Sort Enabled オン
+│  ├─ Player                       ← player.tscn
+│  ├─ Enemy × n                    ← enemy.tscn
+│  ├─ NPC × n                      ← npc.tscn
+│  ├─ Door × n                     ← door.tscn
+│  └─ SavePoint
+├─ SpawnPoints (Node2D)
+│  ├─ start (Marker2D)
+│  └─ from_dungeon (Marker2D)
+├─ RoomCamera (Camera2D)           ← room_camera.gd
+└─ HUD (CanvasLayer)
+
+player.tscn
+Player (CharacterBody2D)           ← player.gd
+├─ Sprite (Sprite2D)
+├─ CollisionShape2D
+├─ SwordPivot (Node2D)             ← facing に合わせて回す
+│  ├─ SwordSprite (Sprite2D)
+│  └─ SwordArea (Area2D)
+├─ InteractArea (Area2D)           ← 話しかけ・扉の検知
+└─ AnimationPlayer
+
+Autoload
+├─ GameState                       ← 鍵・体力・開けた扉・出現位置
+└─ Dialog                          ← 会話ウィンドウ（画面に常駐）</code></pre>
+
+  <span class="stepnum">STEP 0</span>
+  <h3 class="st">プロジェクトと入力・レイヤーの設定</h3>
+
+  <table class="set">
+    <tr><th>場所</th><th>項目</th><th>値</th></tr>
+    <tr><td>表示 → ウィンドウ</td><td>Viewport Width / Height</td><td>256 / 176</td></tr>
+    <tr><td>表示 → ウィンドウ</td><td>Stretch → Mode / Aspect</td><td>viewport / keep</td></tr>
+    <tr><td>レンダリング → テクスチャ</td><td>Default Texture Filter</td><td>Nearest</td></tr>
+  </table>
+
+  <p>256×176は、16×16のタイルが横16枚・縦11枚。<strong>これが1部屋の大きさ</strong>になります。ゼルダ1の1画面とほぼ同じ比率です。</p>
+
+  <table class="set">
+    <tr><th>アクション名</th><th>割り当て</th></tr>
+    <tr><td><code>move_left</code> / <code>move_right</code></td><td>←→、AD</td></tr>
+    <tr><td><code>move_up</code> / <code>move_down</code></td><td>↑↓、WS</td></tr>
+    <tr><td><code>attack</code></td><td>Xキー</td></tr>
+    <tr><td><code>talk</code></td><td>Zキー、スペース</td></tr>
+  </table>
+
+  <p>物理レイヤーは <strong>1: world / 2: player / 3: enemy / 4: interact</strong> の4つに名前を付けます。</p>
+
+  <span class="stepnum">STEP 1</span>
+  <h3 class="st">8方向に動き、向きを持つ</h3>
+
+  <table class="set">
+    <tr><th>ノード</th><th>型</th><th>設定</th></tr>
+    <tr><td>Player</td><td>CharacterBody2D</td><td>Layer「player」、Mask「world」</td></tr>
+    <tr><td>Sprite</td><td>Sprite2D</td><td>16×16。<strong>Offset (0, -8)</strong>（原点を足元にする）</td></tr>
+    <tr><td>CollisionShape2D</td><td>—</td><td>Size (12, 8)、Position (0, -4)</td></tr>
+  </table>
+
+  <div class="note"><b>当たり判定は足元だけ</b><p>見下ろし型では、体全体ではなく<strong>足元の小さな矩形</strong>を当たり判定にします。頭の部分まで含めると、壁の上の方に頭がめり込めなくなり、狭い通路が通れなくなります。ゼルダもマリオRPGも、見下ろしのゲームはほぼ全部この作りです。</p></div>
+
+  <pre><code># player.gd
+
+extends CharacterBody2D
+
+const SPEED := 70.0
+
+var facing := Vector2.DOWN
+
+@onready var sword_pivot: Node2D = $SwordPivot
+
+
+func _physics_process(_delta: float) -> void:
+    var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+    velocity = input * SPEED
+    update_facing(input)
+    move_and_slide()
+
+
+func update_facing(input: Vector2) -> void:
+    if input == Vector2.ZERO:
+        return
+    # 移動は8方向だが、向きは4方向に丸める
+    if abs(input.x) &gt; abs(input.y):
+        facing = Vector2.RIGHT if input.x &gt; 0.0 else Vector2.LEFT
+    else:
+        facing = Vector2.DOWN if input.y &gt; 0.0 else Vector2.UP
+    sword_pivot.rotation = facing.angle()</code></pre>
+
+  <p><code>Input.get_vector</code> は4つのアクションから方向ベクトルを作ってくれます。斜めでも長さが1を超えないので、<strong>斜め移動だけ速くなる問題が起きません。</strong>自分で計算すると必ずこれを踏みます。</p>
+
+  <div class="check"><b>ここで確認</b><p>8方向に動く。斜めが速くならない。壁で止まる。</p></div>
+
+  <span class="stepnum">STEP 2</span>
+  <h3 class="st">Y-sortで前後を出す</h3>
+
+  <p>見下ろし型では、<strong>画面の下にいるものほど手前</strong>に描かれるべきです。<a class="xref" data-ref="s17" href="s17.html">第17回</a>の内容です。</p>
+
+  <table class="set">
+    <tr><th>ノード</th><th>設定</th></tr>
+    <tr><td>Entities</td><td><code>Y Sort Enabled</code> オン</td></tr>
+    <tr><td>Player / Enemy / NPC</td><td>ノードの原点が<strong>足元</strong>に来ていること（Sprite の Offset で調整）</td></tr>
+  </table>
+
+  <div class="note"><b>Offset を使う理由</b><p>Sprite2D の Position を動かすと、当たり判定との位置関係も変わってしまいます。<strong>絵だけをずらしたいときは <code>Offset</code></strong> を使ってください。ノードの原点は足元に置いたまま、絵だけが上に立ちます。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>木や家の下側を歩くと手前に、上側を歩くと後ろに隠れる。</p></div>
+
+  <span class="stepnum">STEP 3</span>
+  <h3 class="st">剣を振る</h3>
+
+  <p>アニメーションは<strong>1本だけ</strong>作ります。向きの違いは <code>SwordPivot</code> の回転で表現するので、4方向ぶん作る必要はありません。</p>
+
+  <table class="set">
+    <tr><th>ノード</th><th>型</th><th>設定</th></tr>
+    <tr><td>SwordPivot</td><td>Node2D</td><td>Position (0, -6)</td></tr>
+    <tr><td>SwordSprite</td><td>Sprite2D</td><td>Position (10, 0)、既定では非表示</td></tr>
+    <tr><td>SwordArea</td><td>Area2D</td><td>Layer なし、Mask「enemy」、Monitoring オフ</td></tr>
+    <tr><td>└ CollisionShape2D</td><td>—</td><td>Size (16, 12)、Position (12, 0)</td></tr>
+    <tr><td>AnimationPlayer</td><td>—</td><td><code>attack</code>（0.28秒）</td></tr>
+  </table>
+
+  <p><code>attack</code> には、SwordSprite の表示・回転の動きに加えて、<strong>メソッド呼び出しトラック</strong>で <code>sword_on</code>（0.08秒）と <code>sword_off</code>（0.20秒）を入れます。<a class="xref" data-ref="s7b" href="s7b.html">第8回</a>・B5と同じ形です。</p>
+
+  <pre><code># player.gd に追加
+
+@onready var anim: AnimationPlayer = $AnimationPlayer
+@onready var sword_area: Area2D = $SwordPivot/SwordArea
+
+
+func _ready() -> void:
+    sword_area.monitoring = false
+    sword_area.body_entered.connect(_on_sword_hit)
+
+
+func sword_on() -> void:
+    sword_area.set_deferred("monitoring", true)
+
+
+func sword_off() -> void:
+    sword_area.set_deferred("monitoring", false)
+
+
+func _on_sword_hit(body: Node) -> void:
+    if body.has_method("take_damage"):
+        body.take_damage(1, (body.global_position - global_position).normalized())</code></pre>
+
+  <p>ダメージを与えるときに<strong>向きも一緒に渡しています。</strong>敵を吹き飛ばす方向に使います。</p>
+
+  <div class="check"><b>ここで確認</b><p>攻撃ボタンで剣が出る。向きを変えると剣の出る方向も変わる。</p></div>
+
+  <span class="stepnum">STEP 4</span>
+  <h3 class="st">ステートマシンを入れる</h3>
+
+  <p><strong>この章の心臓部です。</strong>いままでの <code>if</code> を、状態で整理し直します。</p>
+
+  <pre><code># player.gd を書き換える
+
+enum State { MOVE, ATTACK, HURT, TALK }
+
+var state: State = State.MOVE
+
+
+func _physics_process(delta: float) -> void:
+    match state:
+        State.MOVE:
+            state_move()
+        State.ATTACK:
+            velocity = Vector2.ZERO
+        State.HURT:
+            velocity = velocity.move_toward(Vector2.ZERO, 400.0 * delta)
+        State.TALK:
+            velocity = Vector2.ZERO
+    move_and_slide()
+
+
+func state_move() -> void:
+    var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+    velocity = input * SPEED
+    update_facing(input)
+
+    if Input.is_action_just_pressed("attack"):
+        do_attack()
+
+
+func do_attack() -> void:
+    state = State.ATTACK
+    anim.play("attack")
+    await anim.animation_finished
+    if state == State.ATTACK:      # 途中で被弾していたら戻さない
+        state = State.MOVE</code></pre>
+
+  <div class="note"><b>状態を「戻す」ときの注意</b><p>攻撃アニメが終わったとき、無条件に <code>state = State.MOVE</code> と書きたくなります。ですが<strong>攻撃中に敵に触れて HURT になっているかもしれません。</strong>そこで MOVE に戻すと、のけぞりが消えます。</p>
+  <p><code>if state == State.ATTACK</code> の一行が、それを防いでいます。B3の <code>if busy: return</code> と同じ考え方です。<strong>await のあとは、状況が変わっていないかを確かめる。</strong></p></div>
+
+  <p>状態が増えたときは、この <code>match</code> に一行足すだけで済みます。<code>if</code> の重ね書きと違い、増えても読めなくなりません。</p>
+
+  <div class="check"><b>ここで確認</b><p>攻撃中は歩けず、向きも変わらない。攻撃が終わると動ける。</p></div>
+
+  <span class="stepnum">STEP 5</span>
+  <h3 class="st">画面単位でカメラを動かす</h3>
+
+  <p>ゼルダ1の「部屋が切り替わる」感じを作ります。<strong>マップは1つの大きな TileMapLayer</strong>で、カメラだけが画面単位で動きます。マップの描き方は<a class="xref" data-ref="s7a" href="s7a.html">第7回</a>のとおりです。</p>
+
+  <p>Camera2D は Player の子ではなく、<strong>World の直下</strong>に置いてください。</p>
+
+  <pre><code># room_camera.gd
+
+extends Camera2D
+
+const ROOM := Vector2(256.0, 176.0)
+
+var room := Vector2i(-999, -999)
+var sliding := false
+
+@onready var player: Node2D = get_parent().get_node("Entities/Player")
+
+
+func _ready() -> void:
+    snap_now()
+
+
+func _process(_delta: float) -> void:
+    if sliding:
+        return
+    var here := current_room()
+    if here != room:
+        slide_to(here)
+
+
+func current_room() -> Vector2i:
+    return Vector2i(
+        floori(player.global_position.x / ROOM.x),
+        floori(player.global_position.y / ROOM.y)
+    )
+
+
+func room_center(r: Vector2i) -> Vector2:
+    return Vector2(r) * ROOM + ROOM * 0.5
+
+
+func snap_now() -> void:
+    room = current_room()
+    global_position = room_center(room)
+
+
+func slide_to(r: Vector2i) -> void:
+    room = r
+    sliding = true
+    var t := create_tween()
+    t.tween_property(self, "global_position", room_center(r), 0.35)
+    await t.finished
+    sliding = false</code></pre>
+
+  <div class="note"><b>部屋の番号は割り算で出る</b><p>プレイヤーの座標を1部屋の大きさで割って切り捨てると、<strong>いま何番目の部屋にいるか</strong>が出ます。マップに部屋の区切りを置く必要はありません。タイルを描くだけで、部屋の区切りは自動的に決まります。</p>
+  <p><code>sliding</code> のフラグは、スライド中に次の判定が走るのを止めています。これが無いと、境界上で行ったり来たりしたときにカメラが暴れます。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>画面の端を越えると、カメラが隣の画面へすーっとスライドする。戻ると元の画面へ戻る。</p></div>
+
+  <span class="stepnum">STEP 6</span>
+  <h3 class="st">敵と体力</h3>
+
+  <p>B5の敵と違い、重力がありません。プレイヤーを追いかける形にします。</p>
+
+  <pre><code># enemy.gd
+
+extends CharacterBody2D
+
+const SPEED := 34.0
+const KNOCKBACK := 180.0
+
+var hp := 2
+var knockback := Vector2.ZERO
+
+@onready var player: Node2D = get_tree().get_first_node_in_group("player")
+
+
+func _ready() -> void:
+    $TouchBox.body_entered.connect(_on_touch)
+
+
+func _physics_process(delta: float) -> void:
+    if knockback.length() &gt; 4.0:
+        velocity = knockback
+        knockback = knockback.move_toward(Vector2.ZERO, 600.0 * delta)
+    elif player:
+        velocity = (player.global_position - global_position).normalized() * SPEED
+    move_and_slide()
+
+
+func take_damage(amount: int, dir: Vector2) -> void:
+    hp -= amount
+    knockback = dir * KNOCKBACK
+    modulate = Color(1, 0.4, 0.4)
+    await get_tree().create_timer(0.12).timeout
+    modulate = Color.WHITE
+    if hp &lt;= 0:
+        queue_free()
+
+
+func _on_touch(body: Node) -> void:
+    if body.has_method("take_damage"):
+        body.take_damage(1, (body.global_position - global_position).normalized())</code></pre>
+
+  <p>Player を<strong>グループ <code>player</code></strong> に入れておいてください。<code>get_first_node_in_group</code> でどこからでも取れるようになります。ノードパスで辿るより、階層を変えても壊れません（<a class="xref" data-ref="s14" href="s14.html">第14回</a>）。</p>
+
+  <pre><code># player.gd に追加
+
+signal health_changed(value: int)
+
+const INVINCIBLE_TIME := 0.9
+
+var invincible := false
+
+
+func take_damage(amount: int, dir: Vector2) -> void:
+    if invincible or state == State.TALK:
+        return
+    GameState.hp -= amount
+    health_changed.emit(GameState.hp)
+
+    state = State.HURT
+    velocity = dir * 200.0
+    invincible = true
+
+    var t := create_tween().set_loops(5)
+    t.tween_property($Sprite, "modulate:a", 0.2, 0.09)
+    t.tween_property($Sprite, "modulate:a", 1.0, 0.09)
+
+    await get_tree().create_timer(0.35).timeout
+    if state == State.HURT:
+        state = State.MOVE
+    await get_tree().create_timer(INVINCIBLE_TIME - 0.35).timeout
+    $Sprite.modulate.a = 1.0
+    invincible = false</code></pre>
+
+  <div class="check"><b>ここで確認</b><p>敵が追ってくる。剣で2回叩くと倒せる。倒すとき吹き飛ぶ。触れると自分がのけぞって点滅する。</p></div>
+
+  <span class="stepnum">STEP 7</span>
+  <h3 class="st">村人と会話する</h3>
+
+  <p>会話ウィンドウは<strong>どのマップでも使う</strong>ので、Autoload にします（<a class="xref" data-ref="s15" href="s15.html">第15回</a>）。</p>
+
+  <p><code>dialog.tscn</code> を新規作成。ルートを <code>CanvasLayer</code>、子に Panel と Label を置き、<strong>プロジェクト設定 → Autoload に <code>Dialog</code> として登録</strong>します。</p>
+
+  <pre><code># dialog.gd
+
+extends CanvasLayer
+
+signal finished
+
+var lines: Array[String] = []
+var index := 0
+
+@onready var label: Label = $Panel/Label
+
+
+func _ready() -> void:
+    hide()
+
+
+func start(new_lines: Array[String]) -> void:
+    lines = new_lines
+    index = 0
+    label.text = lines[0]
+    show()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+    if not visible:
+        return
+    if event.is_action_pressed("talk"):
+        index += 1
+        if index &gt;= lines.size():
+            hide()
+            finished.emit()
+        else:
+            label.text = lines[index]
+        get_viewport().set_input_as_handled()</code></pre>
+
+  <pre><code># npc.gd
+
+extends StaticBody2D
+
+@export var lines: Array[String] = ["ここは はじまりの むら。"]
+
+
+func talk() -> void:
+    Dialog.start(lines)</code></pre>
+
+  <p>プレイヤー側は、目の前にいる相手を <code>InteractArea</code> で拾います。</p>
+
+  <pre><code># player.gd に追加
+
+var nearby: Node = null
+
+@onready var interact_area: Area2D = $InteractArea
+
+
+# _ready に追加
+    interact_area.body_entered.connect(func(b): if b.has_method("talk"): nearby = b)
+    interact_area.body_exited.connect(func(b): if b == nearby: nearby = null)
+
+
+# state_move の中に追加
+    if Input.is_action_just_pressed("talk") and nearby:
+        do_talk()
+
+
+func do_talk() -> void:
+    state = State.TALK
+    velocity = Vector2.ZERO
+    nearby.talk()
+    await Dialog.finished
+    state = State.MOVE</code></pre>
+
+  <div class="note"><b><code>set_input_as_handled()</code> が要る理由</b><p>会話ウィンドウを進めるキーと、話しかけるキーが同じです。これが無いと、<strong>1回押しただけで会話が進み、かつ次の会話が始まります。</strong>「この入力はもう使った」と宣言することで、後ろに届かなくなります。</p>
+  <p>InteractArea は Mask に「interact」を入れ、NPC 側の Layer も「interact」にしてください。壁や敵を拾わなくなります。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>村人に近づいて話しかけると文が出る。押すたびに次の文へ進む。会話中は歩けない。終わると動ける。</p></div>
+
+  <span class="stepnum">STEP 8</span>
+  <h3 class="st">鍵と扉</h3>
+
+  <p>ここで初めて<strong>「世界に起きた変化」</strong>を扱います。開けた扉は、部屋を出入りしても開いたままでなければいけません。</p>
+
+  <pre><code># game_state.gd
+# プロジェクト設定 → Autoload に GameState として登録
+
+extends Node
+
+var hp := 3
+var max_hp := 3
+var keys := 0
+var opened_doors := {}        # 扉のID → true
+var next_spawn := "start"     # 次のマップでどこに出るか</code></pre>
+
+  <pre><code># door.gd
+
+extends StaticBody2D
+
+@export var door_id: String = ""
+
+
+func _ready() -> void:
+    if GameState.opened_doors.has(door_id):
+        queue_free()          # もう開けてある
+    $OpenArea.body_entered.connect(_on_body_entered)
+
+
+func _on_body_entered(body: Node) -> void:
+    if not body.is_in_group("player"):
+        return
+    if GameState.keys &lt;= 0:
+        Dialog.start(["かぎが かかっている。"])
+        return
+    GameState.keys -= 1
+    GameState.opened_doors[door_id] = true
+    $OpenSound.play()
+    await $OpenSound.finished
+    queue_free()</code></pre>
+
+  <div class="note"><b><code>door_id</code> を必ず違う値にする</b><p>扉を置くたびに、インスペクタで <code>door_id</code> に固有の名前（<code>dungeon1_entrance</code> など）を入れてください。<strong>空のままだと、1つ開けた瞬間に全部の扉が開きます。</strong>同じIDとして記録されるからです。</p>
+  <p>この「IDで世界の変化を覚える」やり方は、宝箱・倒したボス・イベントの進行など、あらゆる場面で同じ形で使えます。</p></div>
+
+  <p>鍵は小判（B5）と同じ Area2D です。拾ったら <code>GameState.keys += 1</code> して消えます。</p>
+
+  <div class="check"><b>ここで確認</b><p>鍵を持たずに扉に触れると「かぎが かかっている」。鍵を拾ってから触れると開く。別の部屋へ行って戻っても開いたまま。</p></div>
+
+  <span class="stepnum">STEP 9</span>
+  <h3 class="st">ダンジョンへの出入り</h3>
+
+  <p>ダンジョンは別シーンにします（<a class="xref" data-ref="s16" href="s16.html">第16回</a>）。<strong>どこに出るか</strong>を GameState 経由で伝えます。</p>
+
+  <pre><code># portal.gd
+
+extends Area2D
+
+@export var target_scene: PackedScene
+@export var spawn_name: String = "start"
+
+
+func _ready() -> void:
+    body_entered.connect(_on_body_entered)
+
+
+func _on_body_entered(body: Node) -> void:
+    if not body.is_in_group("player"):
+        return
+    GameState.next_spawn = spawn_name
+    get_tree().change_scene_to_packed(target_scene)</code></pre>
+
+  <pre><code># level.gd
+
+extends Node2D
+
+@onready var player: CharacterBody2D = $Entities/Player
+
+
+func _ready() -> void:
+    var marker := $SpawnPoints.get_node_or_null(GameState.next_spawn)
+    if marker:
+        player.global_position = marker.global_position
+    $RoomCamera.snap_now()
+    player.health_changed.connect(_on_health_changed)
+    _on_health_changed(GameState.hp)
+
+
+func _on_health_changed(hp: int) -> void:
+    for i in $HUD/Hearts.get_child_count():
+        $HUD/Hearts.get_child(i).visible = i &lt; hp</code></pre>
+
+  <div class="note"><b>出現位置は名前で指定する</b><p>座標を直接書くと、マップを描き替えたときに全部ずれます。<strong>Marker2D をマップに置いて、その名前で指定します。</strong>ダンジョンから戻ってきたときは <code>from_dungeon</code> という名前のマーカーに出る、という具合です。</p>
+  <p><code>snap_now()</code> を忘れると、シーンが切り替わった直後にカメラが前の部屋からスライドしてきます。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>洞窟の入口に触れるとダンジョンへ移る。出口から戻ると、洞窟の前に立っている。体力と鍵の数が引き継がれている。</p></div>
+
+  <span class="stepnum">STEP 10</span>
+  <h3 class="st">セーブして続きから</h3>
+
+  <p>GameState の中身を、そのままファイルに書き出します。</p>
+
+  <pre><code># game_state.gd に追加
+
+const SAVE_PATH := "user://save.json"
+
+var scene_path := ""          # いまいるマップ
+
+
+func save_game() -> void:
+    var data := {
+        "hp": hp,
+        "max_hp": max_hp,
+        "keys": keys,
+        "opened_doors": opened_doors,
+        "scene_path": scene_path,
+        "next_spawn": next_spawn,
+    }
+    var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+    f.store_string(JSON.stringify(data))
+
+
+func has_save() -> bool:
+    return FileAccess.file_exists(SAVE_PATH)
+
+
+func load_game() -> void:
+    if not has_save():
+        return
+    var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
+    var data: Dictionary = JSON.parse_string(f.get_as_text())
+    hp = int(data.get("hp", 3))
+    max_hp = int(data.get("max_hp", 3))
+    keys = int(data.get("keys", 0))
+    opened_doors = data.get("opened_doors", {})
+    scene_path = data.get("scene_path", "")
+    next_spawn = data.get("next_spawn", "start")</code></pre>
+
+  <div class="note"><b><code>user://</code> という場所</b><p>ゲームの保存先です。実行環境ごとに適切な場所（Windowsなら AppData の中など）に自動で割り振られます。<strong><code>res://</code> には書き込めません。</strong>書き出したものはエディタのファイルシステムには出てこないので、混乱しないでください。</p>
+  <p><code>data.get("hp", 3)</code> のように<strong>既定値つきで読む</strong>のが要点です。あとで項目を増やしたとき、古いセーブデータを読んでもエラーになりません。</p></div>
+
+  <p>セーブポイント（お地蔵さんなど）は NPC と同じ作りで、<code>talk()</code> の中でセーブします。</p>
+
+  <pre><code># save_point.gd
+
+extends StaticBody2D
+
+
+func talk() -> void:
+    GameState.scene_path = get_tree().current_scene.scene_file_path
+    GameState.save_game()
+    Dialog.start(["きろくした。"])</code></pre>
+
+  <p>タイトル画面の「つづきから」では、<code>GameState.load_game()</code> のあとに <code>change_scene_to_file(GameState.scene_path)</code> を呼びます。</p>
+
+  <div class="try"><b>完成の目安</b><p>村を歩き、村人と話し、敵を倒し、鍵を拾って扉を開け、ダンジョンに入って出られる。セーブポイントで記録し、ゲームを終了して起動し直すと、続きから遊べる。<strong>ここまでできたら、あなたはRPGの基本構造を全部作ったことになります。</strong></p></div>
+
+  <h3>余裕ができたら足す機能</h3>
+  <p>ここから先は作らなくても完成です。上から順に、だいたい簡単な順です。「プロンプトをコピー」を押すと、このゲームの内容とコードの作りまで入った質問文がコピーされます。</p>
+
+  <div class="idea"><span class="lv">やさしい</span>
+    <h4>画面切り替え中はプレイヤーを止める</h4>
+    <p>いまはスライド中も歩けます。止めるとゼルダらしい間ができ、境界で往復したときの挙動も安定します。</p>
+    <button class="askbtn" data-ask="カメラが隣の部屋へスライドしている間、プレイヤーの操作を止めて、スライドが終わったら動けるようにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">やさしい</span>
+    <h4>文字を1文字ずつ出す</h4>
+    <p>会話が一気に出るのではなく、送り出されるように表示される。RPGらしさが一段上がります。</p>
+    <button class="askbtn" data-ask="会話の文字を一気に表示するのではなく、1文字ずつ順番に表示したいです。途中でボタンを押したら全部表示に切り替わるようにもしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">やさしい</span>
+    <h4>話しかけると相手がこちらを向く</h4>
+    <p>細かいですが、生きている感じが大きく変わります。</p>
+    <button class="askbtn" data-ask="村人に話しかけたとき、村人がプレイヤーのほうを向くようにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">ふつう</span>
+    <h4>宝箱を置く</h4>
+    <p>開けたら中身が手に入り、二度目は開かない。扉と同じくIDで記録する形の応用です。</p>
+    <button class="askbtn" data-ask="宝箱を置いて、開けると中身が手に入り、一度開けた宝箱は次に来たときも開いたままにしたいです。扉と同じくIDで管理する形にしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">ふつう</span>
+    <h4>体力の最大値を増やすアイテム</h4>
+    <p>探索の報酬になります。ハートの表示も増える形にします。</p>
+    <button class="askbtn" data-ask="拾うと体力の最大値が1増えるアイテムを作りたいです。HUDのハートの数も一緒に増えるようにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">ふつう</span>
+    <h4>会話の内容が進行で変わる</h4>
+    <p>鍵を持っているかどうかで村人のセリフが変わる。イベント進行の第一歩です。</p>
+    <button class="askbtn" data-ask="村人のセリフが、ゲームの進行状況（鍵を持っているか、扉を開けたかなど）によって変わるようにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">むずかしい</span>
+    <h4>ダンジョンのボス</h4>
+    <p>行動パターンを持ち、倒すと扉が開く。状態管理の総合演習になります。</p>
+    <button class="askbtn" data-ask="ダンジョンの最奥にボスを置きたいです。いくつかの行動パターンを持ち、倒すと次の扉が開くようにしたいです。倒したことは記録して、戻ってきても復活しないようにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">むずかしい</span>
+    <h4>マップ画面を出す</h4>
+    <p>どの部屋を通ったかを記録し、地図として表示する。部屋の番号を使うので、いまの作りと相性が良いです。</p>
+    <button class="askbtn" data-ask="通った部屋を記録して、マップ画面で地図として表示したいです。カメラが部屋の番号を計算しているので、それを使えないでしょうか。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">むずかしい</span>
+    <h4>町パートをB5のゲームに移植する</h4>
+    <p>会話・所持品・マップ移動の仕組みを、和風横スクロールのほうへ持っていく。ゴエモンの骨格になります。</p>
+    <button class="askbtn" data-ask="ここで作った会話システムとマップ移動・セーブの仕組みを、別に作っている横スクロールアクションに移植して、町を歩いて住人と話せるパートを足したいです。どこから手を付けるべきか知りたいです。">プロンプトをコピー</button>
+  </div>
+
+  <template id="ctx-p6">私はGodot 4でゲームを作っている初心者です。いまゼルダ1のような見下ろし型の探索アクションRPGを作っています。
+
+【ゲームの内容】
+・見下ろし視点。8方向に歩き、剣を振って敵を倒す（武器は剣のみ）
+・画面の端まで行くと、隣の画面へカメラがスライドする（ゼルダ1の部屋切り替え方式）
+・村人に話しかけるとヒントをくれる
+・鍵を拾い、鍵のかかった扉を開けてダンジョンへ入る
+・セーブポイントで記録すると、次の起動時に続きから遊べる
+・お店や買い物はない
+
+【画面設定】
+・解像度 256×176（16×16タイルが16×11枚 ＝ 1部屋）
+・Stretch Mode は viewport、Aspect は keep
+
+【物理レイヤー】
+1: world / 2: player / 3: enemy / 4: interact
+
+【シーン構成】
+overworld.tscn : World (Node2D) ← level.gd
+├─ Ground / Walls (TileMapLayer)
+├─ Entities (Node2D, Y Sort Enabled) ├─ Player ├─ Enemy×n ├─ NPC×n ├─ Door×n
+├─ SpawnPoints (Marker2D を名前付きで配置)
+├─ RoomCamera (Camera2D) ← room_camera.gd
+└─ HUD (CanvasLayer)
+player.tscn : Player (CharacterBody2D) ← player.gd
+├─ Sprite / CollisionShape2D
+├─ SwordPivot (Node2D) ├─ SwordSprite ├─ SwordArea (Area2D)
+├─ InteractArea (Area2D) / AnimationPlayer
+Autoload : GameState（hp, keys, opened_doors, next_spawn, scene_path）
+Autoload : Dialog（会話ウィンドウ）
+
+【いまのコードの作り】
+・player.gd は enum State { MOVE, ATTACK, HURT, TALK } を match で分岐している
+・向きは facing という1つの変数で持ち、SwordPivot の rotation に使っている
+  （移動は8方向、向きは4方向に丸めている）
+・攻撃は AnimationPlayer の "attack" 1本だけ。向きの違いは SwordPivot の回転で表現
+・メソッド呼び出しトラックから sword_on / sword_off を呼び、monitoring を set_deferred で切替
+・take_damage(amount, dir) の形で、吹き飛ぶ方向も一緒に渡している
+・カメラは部屋の大きさで座標を割って部屋番号を出し、変わったら Tween でスライドする
+・会話は Autoload の Dialog に lines を渡し、await Dialog.finished で終わりを待つ
+・開けた扉は GameState.opened_doors に door_id をキーとして記録する
+・マップ移動は change_scene_to_packed、出現位置は Marker2D の名前で指定する
+・セーブは GameState の中身を JSON にして user://save.json に書いている
+
+【やりたいこと】
+</template>
+
+  <h3>player.gd 全文</h3>
+
+  <pre><code># player.gd
+
+extends CharacterBody2D
+
+signal health_changed(value: int)
+
+enum State { MOVE, ATTACK, HURT, TALK }
+
+const SPEED := 70.0
+const INVINCIBLE_TIME := 0.9
+
+var state: State = State.MOVE
+var facing := Vector2.DOWN
+var invincible := false
+var nearby: Node = null
+
+@onready var anim: AnimationPlayer = $AnimationPlayer
+@onready var sword_pivot: Node2D   = $SwordPivot
+@onready var sword_area: Area2D    = $SwordPivot/SwordArea
+@onready var interact_area: Area2D = $InteractArea
+
+
+func _ready() -> void:
+    add_to_group("player")
+    sword_area.monitoring = false
+    sword_area.body_entered.connect(_on_sword_hit)
+    interact_area.body_entered.connect(func(b): if b.has_method("talk"): nearby = b)
+    interact_area.body_exited.connect(func(b): if b == nearby: nearby = null)
+
+
+func _physics_process(delta: float) -> void:
+    match state:
+        State.MOVE:
+            state_move()
+        State.ATTACK:
+            velocity = Vector2.ZERO
+        State.HURT:
+            velocity = velocity.move_toward(Vector2.ZERO, 400.0 * delta)
+        State.TALK:
+            velocity = Vector2.ZERO
+    move_and_slide()
+
+
+# ---- 移動 ----
+func state_move() -> void:
+    var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+    velocity = input * SPEED
+    update_facing(input)
+
+    if Input.is_action_just_pressed("attack"):
+        do_attack()
+    elif Input.is_action_just_pressed("talk") and nearby:
+        do_talk()
+
+
+func update_facing(input: Vector2) -> void:
+    if input == Vector2.ZERO:
+        return
+    if abs(input.x) &gt; abs(input.y):
+        facing = Vector2.RIGHT if input.x &gt; 0.0 else Vector2.LEFT
+    else:
+        facing = Vector2.DOWN if input.y &gt; 0.0 else Vector2.UP
+    sword_pivot.rotation = facing.angle()
+
+
+# ---- 攻撃 ----
+func do_attack() -> void:
+    state = State.ATTACK
+    anim.play("attack")
+    await anim.animation_finished
+    if state == State.ATTACK:
+        state = State.MOVE
+
+
+func sword_on() -> void:
+    sword_area.set_deferred("monitoring", true)
+
+
+func sword_off() -> void:
+    sword_area.set_deferred("monitoring", false)
+
+
+func _on_sword_hit(body: Node) -> void:
+    if body.has_method("take_damage"):
+        body.take_damage(1, (body.global_position - global_position).normalized())
+
+
+# ---- 会話 ----
+func do_talk() -> void:
+    state = State.TALK
+    velocity = Vector2.ZERO
+    nearby.talk()
+    await Dialog.finished
+    if state == State.TALK:
+        state = State.MOVE
+
+
+# ---- ダメージ ----
+func take_damage(amount: int, dir: Vector2) -> void:
+    if invincible or state == State.TALK:
+        return
+    GameState.hp -= amount
+    health_changed.emit(GameState.hp)
+
+    state = State.HURT
+    velocity = dir * 200.0
+    invincible = true
+
+    var t := create_tween().set_loops(5)
+    t.tween_property($Sprite, "modulate:a", 0.2, 0.09)
+    t.tween_property($Sprite, "modulate:a", 1.0, 0.09)
+
+    await get_tree().create_timer(0.35).timeout
+    if state == State.HURT:
+        state = State.MOVE
+    await get_tree().create_timer(INVINCIBLE_TIME - 0.35).timeout
+    $Sprite.modulate.a = 1.0
+    invincible = false</code></pre>
+
+  <h3>game_state.gd 全文</h3>
+
+  <pre><code># game_state.gd
+
+extends Node
+
+const SAVE_PATH := "user://save.json"
+
+var hp := 3
+var max_hp := 3
+var keys := 0
+var opened_doors := {}
+var next_spawn := "start"
+var scene_path := ""
+
+
+func reset() -> void:
+    hp = 3
+    max_hp = 3
+    keys = 0
+    opened_doors = {}
+    next_spawn = "start"
+    scene_path = ""
+
+
+func save_game() -> void:
+    var data := {
+        "hp": hp,
+        "max_hp": max_hp,
+        "keys": keys,
+        "opened_doors": opened_doors,
+        "scene_path": scene_path,
+        "next_spawn": next_spawn,
+    }
+    var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+    f.store_string(JSON.stringify(data))
+
+
+func has_save() -> bool:
+    return FileAccess.file_exists(SAVE_PATH)
+
+
+func load_game() -> void:
+    if not has_save():
+        return
+    var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
+    var data: Dictionary = JSON.parse_string(f.get_as_text())
+    hp = int(data.get("hp", 3))
+    max_hp = int(data.get("max_hp", 3))
+    keys = int(data.get("keys", 0))
+    opened_doors = data.get("opened_doors", {})
+    scene_path = data.get("scene_path", "")
+    next_spawn = data.get("next_spawn", "start")</code></pre>
+
+  <h3>詰まったときの確認手順</h3>
+  <table>
+    <tr><th>症状</th><th>見るところ</th></tr>
+    <tr><td>斜めだけ速い</td><td><code>Input.get_vector</code> を使っているか。自分で足し算していないか</td></tr>
+    <tr><td>狭い通路が通れない</td><td>CollisionShape2D が足元の小さな矩形になっているか</td></tr>
+    <tr><td>前後の重なりがおかしい</td><td>Entities の Y Sort Enabled。Sprite の Offset で原点が足元か</td></tr>
+    <tr><td>攻撃後に動けなくなる</td><td><code>if state == State.ATTACK</code> の確認を入れているか</td></tr>
+    <tr><td>会話が一瞬で終わる</td><td><code>set_input_as_handled()</code> を書いているか</td></tr>
+    <tr><td>カメラが境界で暴れる</td><td><code>sliding</code> フラグ。スライド中は判定を止めているか</td></tr>
+    <tr><td>マップ移動後にカメラがずれる</td><td>level.gd で <code>snap_now()</code> を呼んでいるか</td></tr>
+    <tr><td>扉が全部いっぺんに開く</td><td>各扉の <code>door_id</code> が空、または重複している</td></tr>
+    <tr><td>出現位置がずれる</td><td>Marker2D の名前と <code>next_spawn</code> の文字列が一致しているか</td></tr>
+    <tr><td>セーブファイルが見つからない</td><td><code>user://</code> はエディタのファイルシステムには出ない。正常</td></tr>
+    <tr><td>古いセーブでエラーが出る</td><td><code>data.get("項目", 既定値)</code> の形で読んでいるか</td></tr>
+  </table>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

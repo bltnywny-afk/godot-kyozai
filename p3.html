@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>B3 モグラ叩き — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="p3">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第6部 実践 — 9本を作る／モグラ叩き</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="p3" data-kind="build" data-title="モグラ叩き" data-file="main.gd">
+  <p class="eyebrow">実践 B3 · 全8ステップ · 規模：5〜7日</p>
+  <h2>モグラ叩き — 家族で交代して遊ぶ</h2>
+  <p class="aim">新しく覚える：ゲーム全体の流れを状態で持つ／AnimationPlayerで出入りを作る／制限時間とスコア／複数人のデータを配列で持つ。</p>
+
+  <div class="note"><b>ここが最初の山です</b><p>B1とB2は「ずっと続く遊び」でした。今回はじめて<strong>始まって、終わって、結果が出て、もう一度</strong>が揃います。この一周を自分の手で作れると、以降の章はすべて「一周の中身が複雑になっただけ」になります。時間をかける価値のある1本です。</p></div>
+
+  <h3>作るものを先に決める</h3>
+  <div class="spec">
+    <p><strong>家族で順番に遊ぶモグラ叩き。</strong></p>
+    <p>9つの穴からモグラが1匹ずつ顔を出す。叩くとつぶれて点が入り、叩かれなければ自分で引っ込む。制限時間は30秒。</p>
+    <p>「つぎは ○○の ばん」と出て、押すとその人の番が始まる。30秒経つと次の人へ交代。全員が終わると、名前と点数が並んだ結果が出る。「もういちど」で最初から。</p>
+    <p>モグラは1種類。叩いてはいけないものは出ない。<strong>誰でもすぐ分かるルール</strong>にします。</p>
+  </div>
+
+  <h3>この章の考え方の芯</h3>
+  <div class="note"><b>3つ</b>
+    <p><strong>1. 状態が二重になる。</strong>B1では「バスが何をしているか」でした。今回は<strong>ゲーム全体が何をしているか</strong>（タイトル・順番待ち・プレイ中・結果）を持ちます。モグラ自身の状態とは別ものです。混ぜないでください。</p>
+    <p><strong>2. 終わるときは必ず後片付けをする。</strong>時間切れになったら、Timerを止めて、出ているモグラを全部消します。ここを忘れると、結果画面の裏でモグラが出続けます。<strong>始めるコードより、終わるコードのほうが忘れられます。</strong></p>
+    <p><strong>3. 人数分のデータは配列で持つ。</strong>変数を <code>score1</code> <code>score2</code> と並べると、3人目を足すときに全部書き直しになります。最初から配列にしておけば、人数は何人でも同じコードで動きます。</p>
+  </div>
+
+  <h3>ノード構成（完成形）</h3>
+  <pre><code>main.tscn
+Main (Node2D)                    ← main.gd
+├─ Board (Node2D)
+│  ├─ Holes (Node2D)             ← 穴（モグラはこの子になる）
+│  │  ├─ Hole1 (Node2D)
+│  │  ├─ ... Hole9
+│  └─ HoleFronts (Node2D)        ← 穴の手前側。Holes より下に置く
+├─ SpawnTimer (Timer)
+├─ HUD (CanvasLayer)
+│  ├─ TopBar (HBoxContainer)
+│  │  ├─ TurnLabel
+│  │  ├─ ScoreLabel
+│  │  └─ TimeLabel
+│  ├─ TurnPanel (Control)        ← 「つぎは ○○の ばん」
+│  │  ├─ TurnMsg (Label)
+│  │  └─ StartButton (Button)
+│  └─ ResultPanel (Control)      ← 全員の結果
+│     ├─ ResultList (VBoxContainer)
+│     └─ RetryButton (Button)
+├─ HitSound (AudioStreamPlayer)
+└─ WhistleSound (AudioStreamPlayer)
+
+mole.tscn
+Mole (Area2D)                    ← mole.gd
+├─ Sprite (ColorRect)
+├─ CollisionShape2D
+└─ AnimationPlayer</code></pre>
+
+  <div class="note"><b>HoleFronts が Holes より下にある理由</b><p><a class="xref" data-ref="s17" href="s17.html">第17回</a>のとおり、シーンドックで<strong>下にあるノードほど手前に描かれます。</strong>穴の手前側のフチを Holes より下に置くと、モグラが穴から出てくるように見えます。位置は Holes と同じに揃えてください。</p></div>
+
+  <span class="stepnum">STEP 0</span>
+  <h3 class="st">プロジェクトの用意</h3>
+
+  <p>今回は横長にします。9つの穴を並べるためです。</p>
+
+  <table class="set">
+    <tr><th>場所</th><th>項目</th><th>値</th></tr>
+    <tr><td>表示 → ウィンドウ</td><td>Viewport Width / Height</td><td>480 / 320</td></tr>
+    <tr><td>表示 → ウィンドウ</td><td>Stretch → Mode / Aspect</td><td>viewport / keep</td></tr>
+    <tr><td>レンダリング → テクスチャ</td><td>Default Texture Filter</td><td>Nearest</td></tr>
+  </table>
+
+  <p>絵はまだ描きません。モグラは茶色い四角、穴は暗い楕円のつもりの四角で進めます。</p>
+
+  <span class="stepnum">STEP 1</span>
+  <h3 class="st">盤面と穴を並べる</h3>
+
+  <p>穴を3×3で並べます。<strong>コードでは位置を計算しません。</strong>エディタで置いた位置をそのまま使います。</p>
+
+  <table class="set">
+    <tr><th>ノード</th><th>型</th><th>設定</th></tr>
+    <tr><td>Main</td><td>Node2D</td><td>main.gd をアタッチ</td></tr>
+    <tr><td>Board</td><td>Node2D</td><td>Position (0, 0)</td></tr>
+    <tr><td>Holes</td><td>Node2D</td><td>Position (0, 0)</td></tr>
+    <tr><td>Hole1〜9</td><td>Node2D</td><td>x は 120／240／360、y は 120／190／260</td></tr>
+    <tr><td>HoleFronts</td><td>Node2D</td><td>Holes と同じ位置に、同じ数のフチを置く</td></tr>
+  </table>
+
+  <p>穴そのものの絵は、各 Hole の子に ColorRect を1つ入れておきます。モグラは実行中にこの Hole の子として追加されるので、<strong>Hole の位置＝モグラの出る位置</strong>になります。</p>
+
+  <div class="check"><b>ここで確認</b><p>F5で、穴が3×3に並んで見える。まだ何も動きません。</p></div>
+
+  <span class="stepnum">STEP 2</span>
+  <h3 class="st">モグラを作る（AnimationPlayer）</h3>
+
+  <p><a class="xref" data-ref="s7b" href="s7b.html">第8回</a>の実践です。<strong>出てくる動きを1本だけ作り、引っ込むのは逆再生で済ませます。</strong></p>
+
+  <p>新規シーンを作り、ルートを <code>Area2D</code>、名前を <code>Mole</code> にして <code>mole.tscn</code> で保存します。</p>
+
+  <table class="set">
+    <tr><th>ノード</th><th>型</th><th>設定</th></tr>
+    <tr><td>Mole</td><td>Area2D</td><td>mole.gd をアタッチ</td></tr>
+    <tr><td>Sprite</td><td>ColorRect</td><td>Size (44, 52)、Position (-22, -52)、茶色</td></tr>
+    <tr><td>CollisionShape2D</td><td>—</td><td>Shape に RectangleShape2D、Size (44, 52)、Position (0, -26)</td></tr>
+    <tr><td>AnimationPlayer</td><td>—</td><td>下の2本を作る</td></tr>
+  </table>
+
+  <p>アニメーションを2本作ります。</p>
+
+  <table class="set">
+    <tr><th>名前</th><th>長さ</th><th>内容</th></tr>
+    <tr><td><code>pop</code></td><td>0.25秒</td><td>Sprite の position.y を 52 → 0（下から出てくる）</td></tr>
+    <tr><td><code>hit</code></td><td>0.18秒</td><td>Sprite の scale を (1,1) → (1.3, 0.4)（つぶれる）</td></tr>
+  </table>
+
+  <p><code>pop</code> の <strong>Loop はオフ</strong>にしてください。オンだと出たり入ったりを繰り返します。</p>
+
+  <div class="note"><b>RESET を作っておく</b><p>アニメーションの編集中に値が変わってしまうので、<a class="xref" data-ref="s7b" href="s7b.html">第8回</a>で触れた <code>RESET</code> アニメーションを作り、Sprite の position と scale の初期値を入れておくと事故が減ります。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>F6でモグラ単体を実行し、アニメーションパネルの再生ボタンで <code>pop</code> と <code>hit</code> が意図どおり動く。</p></div>
+
+  <span class="stepnum">STEP 3</span>
+  <h3 class="st">出て、待って、引っ込む</h3>
+
+  <p>モグラの一生を、モグラ自身に持たせます。Main はまだ触りません。</p>
+
+  <pre><code># mole.gd
+
+extends Area2D
+
+signal hit
+
+const STAY_TIME := 1.1       # 出たまま待つ時間（秒）
+
+var busy := false            # 叩かれた／引っ込み始めた
+
+@onready var anim: AnimationPlayer = $AnimationPlayer
+
+
+func _ready() -> void:
+    input_event.connect(_on_input)
+    start()
+
+
+func start() -> void:
+    anim.play("pop")
+    await anim.animation_finished
+    if busy:
+        return
+    await get_tree().create_timer(STAY_TIME).timeout
+    if busy:
+        return
+    busy = true
+    anim.play_backwards("pop")
+    await anim.animation_finished
+    queue_free()
+
+
+func _on_input(_vp: Node, event: InputEvent, _idx: int) -> void:
+    if busy:
+        return
+    if event is InputEventMouseButton and event.pressed:
+        busy = true
+        hit.emit()
+        anim.play("hit")
+        await anim.animation_finished
+        queue_free()</code></pre>
+
+  <div class="note"><b><code>if busy: return</code> が3回出てくる理由</b><p><code>await</code> で待っている間に、叩かれるかもしれないからです。待ち終わって処理を再開したとき、<strong>状況が変わっていないかを必ず確かめます。</strong>これを忘れると、叩かれたモグラが引っ込む動きも始めて、二重に消えようとしてエラーになります。</p>
+  <p><code>await</code> を使うコードでは、この確認がほぼ毎回必要になります。「待ったあとは疑う」と覚えてください。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>F6でモグラ単体を実行。出てきて、少し待って、引っ込んで消える。出ている間にクリックすると、つぶれて消える。</p></div>
+
+  <span class="stepnum">STEP 4</span>
+  <h3 class="st">ランダムな穴に出す</h3>
+
+  <p>Main の仕事はここからです。<strong>空いている穴を探してから出す</strong>のが要点になります。</p>
+
+  <p>Main に <code>SpawnTimer</code>（Timer、Wait Time 0.8秒、Autostart オフ）を置き、<code>timeout</code> を接続してください。インスペクタの <code>Mole Scene</code> に <code>mole.tscn</code> を割り当てます。</p>
+
+  <pre><code># main.gd
+
+extends Node2D
+
+@export var mole_scene: PackedScene
+
+var score := 0
+
+@onready var holes: Node2D = $Board/Holes
+
+
+func _ready() -> void:
+    $SpawnTimer.start()
+
+
+func _on_spawn_timer_timeout() -> void:
+    var empty := holes.get_children().filter(
+        func(h): return h.get_child_count() == 1)   # 穴の絵だけ＝空き
+    if empty.is_empty():
+        return
+    var m := mole_scene.instantiate()
+    m.hit.connect(_on_mole_hit)
+    empty.pick_random().add_child(m)
+
+
+func _on_mole_hit() -> void:
+    score += 1
+    print(score)</code></pre>
+
+  <div class="note"><b>「空き」の数え方に注意</b><p>各 Hole には穴の絵の ColorRect が1つ入っています。だから<strong>子が1個なら空き、2個ならモグラがいる</strong>という数え方になります。穴の絵を入れていない場合は <code>== 0</code> です。ここは自分の構成に合わせてください。</p>
+  <p>この判定を入れないと、同じ穴に2匹重なって出ます。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>F5で、ランダムな穴からモグラが次々に出る。同じ穴に2匹重ならない。叩くと出力に数字が増えていく。</p></div>
+
+  <span class="stepnum">STEP 5</span>
+  <h3 class="st">制限時間とスコア表示</h3>
+
+  <p>ここでゲーム全体の状態を導入します。</p>
+
+  <pre><code># main.gd に追加
+
+enum Phase { READY, PLAYING, RESULT }
+
+const ROUND_TIME := 30.0
+
+var phase: Phase = Phase.READY
+var time_left := 0.0
+
+@onready var score_label: Label = $HUD/TopBar/ScoreLabel
+@onready var time_label: Label  = $HUD/TopBar/TimeLabel
+
+
+func _process(delta: float) -> void:
+    if phase != Phase.PLAYING:
+        return
+    time_left -= delta
+    time_label.text = str(int(ceil(time_left)))
+    if time_left &lt;= 0.0:
+        end_turn()
+
+
+func start_turn() -> void:
+    phase = Phase.PLAYING
+    score = 0
+    time_left = ROUND_TIME
+    update_hud()
+    $SpawnTimer.start()
+
+
+func end_turn() -> void:
+    phase = Phase.READY
+    $SpawnTimer.stop()
+    clear_moles()
+    $WhistleSound.play()
+
+
+func clear_moles() -> void:
+    for h in holes.get_children():
+        for c in h.get_children():
+            if c is Area2D:          # モグラだけ消す。穴の絵は残す
+                c.queue_free()
+
+
+func update_hud() -> void:
+    score_label.text = "てん %d" % score
+    time_label.text = str(int(ceil(time_left)))</code></pre>
+
+  <p><code>_ready</code> の <code>$SpawnTimer.start()</code> は消し、代わりに <code>start_turn()</code> を呼ぶようにします。<code>_on_mole_hit</code> も <code>update_hud()</code> を呼ぶ形に直してください。</p>
+
+  <div class="note"><b>後片付けを1つの関数にまとめる</b><p><code>clear_moles()</code> のように<strong>片付けを名前の付いた関数にしておく</strong>と、あとで「もう一度」を作るときにそのまま使えます。終了処理を <code>end_turn()</code> の中に直接書いてしまうと、リトライのときに書き写すことになります。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>30秒のカウントダウンが進み、0で笛が鳴ってモグラが全部消える。点数が画面に出ている。時間切れ後にモグラが出てこない。</p></div>
+
+  <span class="stepnum">STEP 6</span>
+  <h3 class="st">順番に交代する</h3>
+
+  <p>人数分のデータを配列で持ちます。<strong>ここが今回いちばんの学びどころ</strong>です。</p>
+
+  <pre><code># main.gd に追加
+
+@export var player_names: Array[String] = ["おとうさん", "おかあさん", "こども"]
+
+var scores: Array[int] = []
+var turn := 0
+
+@onready var turn_panel: Control = $HUD/TurnPanel
+@onready var turn_msg: Label     = $HUD/TurnPanel/TurnMsg
+@onready var turn_label: Label   = $HUD/TopBar/TurnLabel
+
+
+func _ready() -> void:
+    turn_panel.hide()
+    $HUD/ResultPanel.hide()
+    new_game()
+
+
+func new_game() -> void:
+    scores.clear()
+    turn = 0
+    show_turn_panel()
+
+
+func show_turn_panel() -> void:
+    phase = Phase.READY
+    turn_msg.text = "つぎは %s の ばん" % player_names[turn]
+    turn_panel.show()
+
+
+func _on_start_button_pressed() -> void:
+    turn_panel.hide()
+    turn_label.text = player_names[turn]
+    start_turn()</code></pre>
+
+  <p><code>end_turn()</code> の最後に、次へ進む処理を足します。</p>
+
+  <pre><code># main.gd の end_turn に追加
+
+    scores.append(score)
+    turn += 1
+    if turn &gt;= player_names.size():
+        show_result()
+    else:
+        show_turn_panel()</code></pre>
+
+  <div class="note"><b>人数はインスペクタで決まる</b><p><code>player_names</code> を <code>@export</code> にしてあるので、<strong>エディタで名前を足せば人数が増えます。</strong>コードは一行も変わりません。2人でも5人でも同じように動きます。</p>
+  <p>これが「人数分のデータを配列で持つ」ということの意味です。B4ではこの考え方を、問題データに対して使います。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>「つぎは おとうさん の ばん」→ 押す → 30秒プレイ → 「つぎは おかあさん の ばん」と進む。最後の人が終わると、まだ何も起きなくてよい。</p></div>
+
+  <span class="stepnum">STEP 7</span>
+  <h3 class="st">結果を出して、もう一度</h3>
+
+  <p>結果画面は、名前と点数を並べるだけです。<strong>ラベルをコードで作って並べます。</strong></p>
+
+  <pre><code># main.gd に追加
+
+@onready var result_panel: Control   = $HUD/ResultPanel
+@onready var result_list: VBoxContainer = $HUD/ResultPanel/ResultList
+
+
+func show_result() -> void:
+    phase = Phase.RESULT
+
+    for c in result_list.get_children():
+        c.queue_free()              # 前回の結果を消す
+
+    var best := 0
+    for s in scores:
+        best = max(best, s)
+
+    for i in player_names.size():
+        var row := Label.new()
+        var mark := "　★" if scores[i] == best else ""
+        row.text = "%s   %d てん%s" % [player_names[i], scores[i], mark]
+        result_list.add_child(row)
+
+    result_panel.show()
+
+
+func _on_retry_button_pressed() -> void:
+    result_panel.hide()
+    new_game()</code></pre>
+
+  <div class="note"><b>前回の結果を消す1行</b><p><code>result_list</code> の子を消してから作り直しています。これを忘れると、2回目の結果が前回の下に積み重なっていきます。<strong>「作る前に消す」</strong>は、動的にUIを作るときの定型です。</p></div>
+
+  <h3>仕上げ</h3>
+  <ul>
+    <li><strong>同点の扱い。</strong>上のコードでは、最高点が同じ人全員に★が付きます。1人だけにしたいなら別の書き方が要ります。家族で遊ぶなら、全員に付くほうが平和です。</li>
+    <li><strong>幼い子には難易度を下げる。</strong><code>STAY_TIME</code> を長くすると、出ている時間が延びて叩きやすくなります。人ごとに変えたいなら、名前と一緒に設定を持たせる形にします。</li>
+    <li><strong>叩いた手応え。</strong><code>HitSound</code> を鳴らし、点数のラベルを一瞬だけ大きくすると、当たった実感が出ます。</li>
+    <li><strong>「はじめる」までの間を作る。</strong>押した瞬間に始まると身構えられません。「3・2・1」の数秒を入れると、交代のテンポが良くなります。</li>
+  </ul>
+
+  <div class="try"><b>完成の目安</b><p>全員が順番に遊べて、結果が出て、「もういちど」で最初から遊べる。2周目の結果が正しく出る。時間切れの後にモグラが残らない。<strong>ここまでできたら、あなたはゲームを1本完成させたことになります。</strong></p></div>
+
+  <h3>余裕ができたら足す機能</h3>
+  <p>ここから先は作らなくても完成です。上から順に、だいたい簡単な順です。「プロンプトをコピー」を押すと、このゲームの内容とコードの作りまで入った質問文がコピーされます。</p>
+
+  <div class="idea"><span class="lv">やさしい</span>
+    <h4>叩いた音を何種類かからランダムに</h4>
+    <p>毎回同じ音だと単調です。数種類を用意してランダムに選ぶだけで、手応えが大きく変わります。</p>
+    <button class="askbtn" data-ask="モグラを叩いたときの効果音を、数種類の中からランダムに選んで鳴らすようにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">やさしい</span>
+    <h4>だんだん速くなる</h4>
+    <p>残り時間が減るほど、モグラが出る間隔が短くなる。終盤の盛り上がりが作れます。</p>
+    <button class="askbtn" data-ask="残り時間が減るにつれてモグラの出る間隔が短くなり、だんだん難しくなるようにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">やさしい</span>
+    <h4>始まる前のカウントダウン</h4>
+    <p>「はじめる」を押してから3・2・1と数えてスタート。交代のテンポが整います。</p>
+    <button class="askbtn" data-ask="「はじめる」ボタンを押してから、3・2・1のカウントダウンを表示してからゲームを始めるようにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">ふつう</span>
+    <h4>連続で叩くとボーナス</h4>
+    <p>続けて当てるほど点が増える。逃すと元に戻る。数字が伸びる快感を足せます。</p>
+    <button class="askbtn" data-ask="モグラを連続で叩くとボーナス点が入るコンボの仕組みを入れたいです。叩き逃したらコンボが切れるようにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">ふつう</span>
+    <h4>人ごとに難易度を変える</h4>
+    <p>小さい子はモグラが長く出て、大人は短い。同じ土俵で遊べるようになります。</p>
+    <button class="askbtn" data-ask="プレイヤーごとに難易度を変えたいです。名前と一緒に「モグラが出ている時間」の設定を持たせて、人によって変わるようにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">ふつう</span>
+    <h4>名前を画面で決める</h4>
+    <p>いまはインスペクタで設定しています。ゲーム開始前の画面で人数と名前を入力できるようにします。</p>
+    <button class="askbtn" data-ask="いまはインスペクタで設定している参加者の名前を、ゲーム開始前の画面で人数と名前を入力して決められるようにしたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">むずかしい</span>
+    <h4>最高記録を保存する</h4>
+    <p>アプリを閉じても、これまでの最高点が残っている。セーブの入門です。</p>
+    <button class="askbtn" data-ask="これまでの最高点を保存して、アプリを閉じて開き直しても残っているようにしたいです。Godot 4でのセーブとロードの基本から知りたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">むずかしい</span>
+    <h4>勝った人にお祝いの演出</h4>
+    <p>結果画面で1位に紙吹雪を降らせる。パーティクルの練習になります。</p>
+    <button class="askbtn" data-ask="結果画面で1位の人に紙吹雪が降るお祝いの演出を入れたいです。パーティクルの使い方から知りたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea"><span class="lv">むずかしい</span>
+    <h4>叩いてはいけないものを混ぜる</h4>
+    <p>ときどき別のものが出て、叩くと点が減る。判断の要素が入り、難易度が一段上がります。</p>
+    <button class="askbtn" data-ask="ときどき叩いてはいけないものが出てきて、叩くと点が減るようにしたいです。モグラとは別のシーンにする方法から知りたいです。">プロンプトをコピー</button>
+  </div>
+
+  <template id="ctx-p3">私はGodot 4でゲームを作っている初心者です。いま「家族で交代して遊ぶモグラ叩き」を作っています。
+
+【ゲームの内容】
+・9つの穴からモグラが1匹ずつ顔を出す。叩くとつぶれて点が入る
+・叩かれなければ自分で引っ込む。制限時間は30秒
+・「つぎは○○のばん」と出て、押すとその人の番が始まる
+・全員が終わると、名前と点数が並んだ結果画面。「もういちど」で最初から
+・モグラは1種類だけ。叩いてはいけないものは出ない
+
+【画面設定】
+・解像度 480×320、Stretch Mode は viewport、Aspect は keep
+
+【シーン構成】
+main.tscn : Main (Node2D) ← main.gd
+├─ Board ├─ Holes(Hole1〜9) ├─ HoleFronts
+├─ SpawnTimer (Timer)
+├─ HUD (CanvasLayer)
+│  ├─ TopBar ├─ TurnLabel ├─ ScoreLabel ├─ TimeLabel
+│  ├─ TurnPanel ├─ TurnMsg ├─ StartButton
+│  └─ ResultPanel ├─ ResultList (VBoxContainer) ├─ RetryButton
+mole.tscn : Mole (Area2D) ← mole.gd
+├─ Sprite / CollisionShape2D / AnimationPlayer
+
+【いまのコードの作り】
+・モグラは mole.gd が自分の一生を持つ。AnimationPlayer の "pop" を再生し、
+  待って、play_backwards("pop") で引っ込んで queue_free() する
+・叩かれたら hit シグナルを出し、"hit" アニメを再生して消える
+・busy というフラグで、await の前後に状況が変わっていないか確認している
+・Main は enum Phase { READY, PLAYING, RESULT } でゲーム全体の状態を持つ
+・SpawnTimer の timeout で、子が1個の穴（＝空き）を探してモグラを add_child する
+・参加者は @export var player_names: Array[String] で持ち、scores 配列に点を貯める
+・全員終わったら show_result() でラベルを動的に並べて表示する
+
+【やりたいこと】
+</template>
+
+  <h3>mole.gd 全文</h3>
+
+  <pre><code># mole.gd
+
+extends Area2D
+
+signal hit
+
+const STAY_TIME := 1.1       # 出たまま待つ時間（秒）
+
+var busy := false
+
+@onready var anim: AnimationPlayer = $AnimationPlayer
+
+
+func _ready() -> void:
+    input_event.connect(_on_input)
+    start()
+
+
+func start() -> void:
+    anim.play("pop")
+    await anim.animation_finished
+    if busy:
+        return
+    await get_tree().create_timer(STAY_TIME).timeout
+    if busy:
+        return
+    busy = true
+    anim.play_backwards("pop")
+    await anim.animation_finished
+    queue_free()
+
+
+func _on_input(_vp: Node, event: InputEvent, _idx: int) -> void:
+    if busy:
+        return
+    if event is InputEventMouseButton and event.pressed:
+        busy = true
+        hit.emit()
+        anim.play("hit")
+        await anim.animation_finished
+        queue_free()</code></pre>
+
+  <h3>main.gd 全文</h3>
+
+  <pre><code># main.gd
+
+extends Node2D
+
+enum Phase { READY, PLAYING, RESULT }
+
+const ROUND_TIME := 30.0
+
+@export var mole_scene: PackedScene
+@export var player_names: Array[String] = ["おとうさん", "おかあさん", "こども"]
+
+var phase: Phase = Phase.READY
+var scores: Array[int] = []
+var turn := 0
+var score := 0
+var time_left := 0.0
+
+@onready var holes: Node2D = $Board/Holes
+@onready var score_label: Label = $HUD/TopBar/ScoreLabel
+@onready var time_label: Label  = $HUD/TopBar/TimeLabel
+@onready var turn_label: Label  = $HUD/TopBar/TurnLabel
+@onready var turn_panel: Control = $HUD/TurnPanel
+@onready var turn_msg: Label     = $HUD/TurnPanel/TurnMsg
+@onready var result_panel: Control      = $HUD/ResultPanel
+@onready var result_list: VBoxContainer = $HUD/ResultPanel/ResultList
+
+
+func _ready() -> void:
+    turn_panel.hide()
+    result_panel.hide()
+    new_game()
+
+
+func _process(delta: float) -> void:
+    if phase != Phase.PLAYING:
+        return
+    time_left -= delta
+    time_label.text = str(int(ceil(time_left)))
+    if time_left &lt;= 0.0:
+        end_turn()
+
+
+# ---- ゲーム全体の流れ ----
+func new_game() -> void:
+    scores.clear()
+    turn = 0
+    show_turn_panel()
+
+
+func show_turn_panel() -> void:
+    phase = Phase.READY
+    turn_msg.text = "つぎは %s の ばん" % player_names[turn]
+    turn_panel.show()
+
+
+func _on_start_button_pressed() -> void:
+    turn_panel.hide()
+    turn_label.text = player_names[turn]
+    start_turn()
+
+
+func start_turn() -> void:
+    phase = Phase.PLAYING
+    score = 0
+    time_left = ROUND_TIME
+    update_hud()
+    $SpawnTimer.start()
+
+
+func end_turn() -> void:
+    phase = Phase.READY
+    $SpawnTimer.stop()
+    clear_moles()
+    $WhistleSound.play()
+
+    scores.append(score)
+    turn += 1
+    if turn &gt;= player_names.size():
+        show_result()
+    else:
+        show_turn_panel()
+
+
+func show_result() -> void:
+    phase = Phase.RESULT
+
+    for c in result_list.get_children():
+        c.queue_free()
+
+    var best := 0
+    for s in scores:
+        best = max(best, s)
+
+    for i in player_names.size():
+        var row := Label.new()
+        var mark := "　★" if scores[i] == best else ""
+        row.text = "%s   %d てん%s" % [player_names[i], scores[i], mark]
+        result_list.add_child(row)
+
+    result_panel.show()
+
+
+func _on_retry_button_pressed() -> void:
+    result_panel.hide()
+    new_game()
+
+
+# ---- モグラ ----
+func _on_spawn_timer_timeout() -> void:
+    var empty := holes.get_children().filter(
+        func(h): return h.get_child_count() == 1)
+    if empty.is_empty():
+        return
+    var m := mole_scene.instantiate()
+    m.hit.connect(_on_mole_hit)
+    empty.pick_random().add_child(m)
+
+
+func _on_mole_hit() -> void:
+    score += 1
+    $HitSound.play()
+    update_hud()
+
+
+func clear_moles() -> void:
+    for h in holes.get_children():
+        for c in h.get_children():
+            if c is Area2D:
+                c.queue_free()
+
+
+func update_hud() -> void:
+    score_label.text = "てん %d" % score
+    time_label.text = str(int(ceil(time_left)))</code></pre>
+
+  <h3>詰まったときの確認手順</h3>
+  <table>
+    <tr><th>症状</th><th>見るところ</th></tr>
+    <tr><td>モグラが出ない</td><td><code>mole_scene</code> の割り当て。空き穴の判定の数（子が1個か0個か）</td></tr>
+    <tr><td>同じ穴に重なって出る</td><td><code>filter</code> の条件。穴の絵を入れているかで数が変わる</td></tr>
+    <tr><td>叩いても反応しない</td><td>CollisionShape2D の Shape。モグラが引っ込みきる前か</td></tr>
+    <tr><td>「二重に消そうとした」エラー</td><td><code>await</code> のあとに <code>if busy: return</code> を入れ忘れている</td></tr>
+    <tr><td>時間切れ後もモグラが出る</td><td><code>$SpawnTimer.stop()</code> を呼んでいるか</td></tr>
+    <tr><td>結果が積み重なる</td><td><code>show_result</code> の冒頭で古いラベルを消しているか</td></tr>
+    <tr><td>2周目が始まらない</td><td><code>new_game()</code> で <code>scores.clear()</code> と <code>turn = 0</code> を戻しているか</td></tr>
+    <tr><td>モグラが穴の手前に出る</td><td>HoleFronts が Holes より下にあるか（<a class="xref" data-ref="s17" href="s17.html">第17回</a>）</td></tr>
+  </table>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

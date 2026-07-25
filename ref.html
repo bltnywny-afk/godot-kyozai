@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>付録：早見表 — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="ref">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">付録／付録：早見表</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="ref" data-title="付録：早見表">
+  <p class="eyebrow">付録 · 随時参照</p>
+  <h2>早見表</h2>
+
+  <h3>ノードの選び方</h3>
+  <table>
+    <tr><th>やりたいこと</th><th>ノード</th></tr>
+    <tr><td>絵を1枚出す</td><td><code>Sprite2D</code></td></tr>
+    <tr><td>絵を動かす</td><td><code>AnimatedSprite2D</code></td></tr>
+    <tr><td>決まった動きを作り込む</td><td><code>AnimationPlayer</code></td></tr>
+    <tr><td>地形を敷く</td><td><code>TileMapLayer</code></td></tr>
+    <tr><td>操作キャラ</td><td><code>CharacterBody2D</code></td></tr>
+    <tr><td>壁・床</td><td><code>StaticBody2D</code></td></tr>
+    <tr><td>取得・ダメージ判定</td><td><code>Area2D</code></td></tr>
+    <tr><td>判定の形</td><td><code>CollisionShape2D</code></td></tr>
+    <tr><td>画面に貼り付くUI</td><td><code>CanvasLayer</code> + <code>Control</code></td></tr>
+    <tr><td>一定時間待つ</td><td><code>Timer</code></td></tr>
+    <tr><td>音を鳴らす</td><td><code>AudioStreamPlayer(2D)</code></td></tr>
+    <tr><td>まとめるだけ</td><td><code>Node</code></td></tr>
+  </table>
+
+  <h3>ショートカット</h3>
+  <table>
+    <tr><td><code>F5</code></td><td>プロジェクトを実行</td></tr>
+    <tr><td><code>F6</code></td><td>いま開いているシーンだけ実行</td></tr>
+    <tr><td><code>F8</code></td><td>停止</td></tr>
+    <tr><td><code>F1</code></td><td>クラスの説明を検索</td></tr>
+    <tr><td><code>Ctrl</code>+<code>S</code></td><td>シーンを保存</td></tr>
+    <tr><td><code>Ctrl</code>+<code>A</code></td><td>子ノードを追加</td></tr>
+    <tr><td><code>Ctrl</code>+<code>D</code></td><td>複製</td></tr>
+  </table>
+
+  <h3>Claudeに聞くときのプロンプト</h3>
+  <p>詰まったときや、自分で機能を足したくなったときに使ってください。コピーして、（　）の中を自分の状況に書き換えてから貼ります。</p>
+
+  <div class="idea">
+    <h4>うまく動かないとき</h4>
+    <p>症状・やりたかったこと・関係するコードの3点が揃っていると、答えの精度が大きく変わります。</p>
+    <button class="askbtn" data-raw="私はGodot 4でゲームを作っている初心者です。
+
+【やりたかったこと】
+（　）
+
+【実際に起きていること】
+（　）
+
+【エラーが出ている場合、その全文】
+（出ていなければ「エラーは出ていません」と書く）
+
+【関係していそうなコード】
+（　）
+
+【ノード構成】
+（　）
+
+初心者にも分かるように、原因の見つけ方と直し方を教えてください。まず何を確認すればいいかも知りたいです。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea">
+    <h4>機能を足したいとき</h4>
+    <p>いまの作りを先に説明するのが要点です。それがないと、既存のコードと噛み合わない答えが返ってきます。</p>
+    <button class="askbtn" data-raw="私はGodot 4でゲームを作っている初心者です。
+
+【作っているゲーム】
+（　）
+
+【いまのノード構成】
+（　）
+
+【いまのコード】
+（　）
+
+【足したい機能】
+（　）
+
+追加するコードと、エディタでの設定を具体的に教えてください。既存のコードのどこに足せばいいかも示してください。">プロンプトをコピー</button>
+  </div>
+
+  <div class="idea">
+    <h4>意味が分からない言葉が出てきたとき</h4>
+    <p>Godotは用語が独特です。分からないまま進むと、後で必ず詰まります。</p>
+    <button class="askbtn" data-raw="Godot 4を勉強している初心者です。「（　）」という言葉の意味が分かりません。
+
+・それが何なのか
+・どういうときに使うのか
+・使わないとどう困るのか
+・簡単な使用例
+
+を、初心者向けに教えてください。">プロンプトをコピー</button>
+  </div>
+
+  <h3>用語</h3>
+  <table>
+    <tr><td><strong>ノード</strong></td><td>1つの仕事を持つ最小部品</td></tr>
+    <tr><td><strong>シーン</strong></td><td>保存されたノードの木（<code>.tscn</code>）</td></tr>
+    <tr><td><strong>インスタンス化</strong></td><td>保存済みシーンを実体として置くこと</td></tr>
+    <tr><td><strong>シグナル</strong></td><td>「起きたこと」を知らせる通知</td></tr>
+    <tr><td><strong>Autoload</strong></td><td>常駐して消えないノード</td></tr>
+    <tr><td><strong>Layer / Mask</strong></td><td>自分は何者か / 自分は何を見るか</td></tr>
+    <tr><td><strong>リモートツリー</strong></td><td>実行中の実際のノードの状態</td></tr>
+  </table>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

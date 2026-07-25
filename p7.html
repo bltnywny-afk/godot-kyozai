@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>B7 ローグライク — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="p7">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">第6部 実践 — 9本を作る／ローグライク</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="p7" data-kind="build" data-sketch="1" data-title="ローグライク">
+  <p class="eyebrow">実践 B7 · 設計メモ</p>
+  <h2>Game Boy風ローグライク</h2>
+  <p class="aim">新しく覚える：ターン制の設計／表示とデータの分離／手続き生成／独自シミュレーション。</p>
+
+  <div class="sketch"><b>この章は設計メモです</b><p>B1〜B6と違い、ここは<strong>手順書ではなく方針書</strong>です。構成と考え方の要点だけを置いてあります。B6まで作り終えて、実際に取りかかる段になったら、そのとき詳細版を用意してください。先に書いても、そのころには自分の判断で作れるようになっているはずです。</p></div>
+
+  <p>B5・B6はリアルタイムでした。<strong>ターン制は根本から設計が違います。</strong>毎フレーム動くのではなく、「手番が回ってきたときだけ動く」。ここを混ぜると収拾がつかなくなるので、最初に切り分けてください。</p>
+
+  <h3>構成 — 表示とデータを分ける</h3>
+  <pre><code>Game
+├─ TurnManager (Node)     ← 手番の管理。ここが心臓部
+├─ MapData (Node)         ← 地形・高さ・水量を「配列」で持つ
+├─ TileMapLayer           ← MapDataを描くだけ
+├─ Actors (Node2D)
+│  ├─ Player
+│  └─ Enemy × n
+└─ HUD (CanvasLayer)</code></pre>
+
+  <div class="note"><b>この章の最重要点</b><p><strong>マップの状態をノードで持たないこと。</strong>高さも水量も、ただの2次元配列で持ちます。TileMapLayerはその配列を毎ターン描き直す表示装置にすぎません。</p><p>こうしておくと、水流の計算が「配列を舐めて隣のマスと比較する」だけの純粋な処理になります。ノードを走査する形にすると、この計算は途端に書けなくなります。設計済みの高低差（0〜2.0、0.25刻み）と水流は、この分離ができているかどうかで難易度が10倍変わります。</p></div>
+
+  <h3>1ターンの流れ</h3>
+  <pre><code>入力待ち
+  → プレイヤーの行動を確定（データ更新）
+  → 全アクターの行動を確定
+  → 環境の更新（水が流れる）
+  → 表示を更新（Tweenで見せる）
+  → アニメ終了を待つ
+  → 入力待ちに戻る</code></pre>
+
+  <p>データ上は<strong>一瞬で確定</strong>させ、見た目だけTweenでゆっくり見せます。逆にすると、アニメ中の状態が不定になって必ずバグります。</p>
+
+  <h3>作る順番</h3>
+  <ul>
+    <li>1. 固定マップ・1体・移動だけのターン制</li>
+    <li>2. 敵を足す（手番が回る順序の確立）</li>
+    <li>3. 高さの概念を配列に足し、移動可否に反映</li>
+    <li>4. 水量を足し、毎ターン隣へ流す</li>
+    <li>5. シャベルと水鉄砲で地形を変えられるようにする</li>
+    <li>6. 最後にフロアの自動生成</li>
+  </ul>
+
+  <div class="note"><b>詰まりやすい点</b><p>アニメーション中に次の入力を受けてしまい、2手進む。<code>var accepting_input := false</code> のようなフラグでロックします。</p><p>自動生成は最後に回してください。先に作ると、デバッグのたびにマップが変わって原因が追えません。</p></div>
+
+  <div class="try"><b>完成の目安</b><p>自動生成された1フロアを、地形を掘り水を流して攻略し、階段で次のフロアへ行ける。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>
