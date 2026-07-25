@@ -49,6 +49,43 @@ var ctx=tpl?tpl.innerHTML.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&am
 txt=ctx+b.dataset.ask+'\n\n初心者にも分かるように、追加するコードと、エディタでの設定を具体的に教えてください。既存のコードのどこに足せばいいかも示してください。';}
 copyText(txt,b,'✓ コピーした');});});
 
+// Git状態遷移ビジュアル
+var gv=sec&&sec.querySelector('#gitviz');
+if(gv){
+var gvStage=0;
+var gvStages=Array.prototype.slice.call(gv.querySelectorAll('.gv-stage'));
+var gvArrows=Array.prototype.slice.call(gv.querySelectorAll('.gv-arrow'));
+var gvMsg=gv.querySelector('.gv-msg');
+var gvBtn={};['edit','add','commit','push','reset'].forEach(function(a){
+gvBtn[a]=gv.querySelector('[data-act="'+a+'"]');});
+var GV_REACHED=['gv-edited','gv-staged','gv-committed','gv-pushed'];
+var GV_LABEL=[
+['変更なし','変更なし','変更なし','変更なし'],
+['変更あり','届いていません','届いていません','届いていません'],
+['変更あり','ステージ済み','届いていません','届いていません'],
+['変更あり','ステージ済み','コミット済み','届いていません'],
+['変更あり','ステージ済み','コミット済み','反映済み']];
+var GV_MSG=[
+'「① ファイルを編集する」を押して、変更がどう伝わっていくか見てください。',
+'作業ディレクトリのファイルが変わりました。まだGitには何も伝えていません。',
+'git add で、変更を「次のコミットに含めるもの」として登録しました（ステージ）。',
+'git commit で、ステージの内容が履歴として記録されました。まだGitHubには届いていません。',
+'git push で、GitHub（リモート）にも同じ内容が届きました。公開ページに反映されるのはこの瞬間です。'];
+function gvPaint(){
+gvStages.forEach(function(s,i){var reached=gvStage>i;
+s.className='gv-stage'+(reached?' '+GV_REACHED[i]:(gvStage>=1?' gv-pending':' gv-clean'));
+s.querySelector('.gv-state').textContent=GV_LABEL[gvStage][i];});
+gvArrows.forEach(function(a,i){a.classList.toggle('gv-active',i===gvStage-1);});
+gvMsg.textContent=GV_MSG[gvStage];
+gvBtn.edit.disabled=gvStage!==0;gvBtn.add.disabled=gvStage!==1;
+gvBtn.commit.disabled=gvStage!==2;gvBtn.push.disabled=gvStage!==3;}
+gvBtn.edit.addEventListener('click',function(){gvStage=1;gvPaint();});
+gvBtn.add.addEventListener('click',function(){gvStage=2;gvPaint();});
+gvBtn.commit.addEventListener('click',function(){gvStage=3;gvPaint();});
+gvBtn.push.addEventListener('click',function(){gvStage=4;gvPaint();});
+gvBtn.reset.addEventListener('click',function(){gvStage=0;gvPaint();});
+gvPaint();}
+
 // コードカード
 var panel=document.getElementById('codepanel');
 var wide=window.matchMedia('(min-width:1150px)');

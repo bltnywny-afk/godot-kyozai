@@ -217,6 +217,7 @@ main{max-width:760px}
   --accent-soft:#20303c; --grid:rgba(255,255,255,.03);
   --ok:#7fb884; --ok-bg:#1c2620; --code-bg:#2a312d; --barbg:#2b332e;
   --shadow:rgba(0,0,0,.5); --btn-ink:#161a18;
+  --warn:#d3a15c; --warn-bg:#2b2419; --remote:#b79ae8; --remote-bg:#241f30;
 }
 :root[data-theme="light"]{
   --paper:#e7eae4; --card:#f7f9f5; --ink:#1b211e; --mid:#58635b;
@@ -224,6 +225,7 @@ main{max-width:760px}
   --accent-soft:#dbe5ee; --grid:rgba(27,33,30,.05);
   --ok:#4a7c59; --ok-bg:#e9f0ea; --code-bg:#dfe4dc; --barbg:#d6dcd3;
   --shadow:rgba(27,33,30,.14); --btn-ink:#ffffff;
+  --warn:#96652a; --warn-bg:#f2e6d3; --remote:#6b4fa0; --remote-bg:#e8e0f5;
 }
 code{background:var(--code-bg)}
 .check{border-left-color:var(--ok);background:var(--ok-bg)}
@@ -297,6 +299,36 @@ h3.st{display:block}
   display:block;margin-bottom:8px}
 .sketch p{margin:0 0 10px}
 .sketch p:last-child{margin-bottom:0}
+
+/* ---- Git状態遷移ビジュアル ---- */
+.gitviz{border:1px solid var(--rule);border-radius:2px;background:var(--card);padding:20px 20px 18px;margin:0 0 22px}
+.gv-stages{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}
+.gv-stage{flex:1 1 130px;min-width:120px;border:1px solid var(--rule);border-radius:2px;
+  background:var(--paper);padding:12px 10px;text-align:center;transition:border-color .2s,background .2s}
+.gv-stage .gv-label{display:block;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;
+  color:var(--mid);margin:0 0 10px}
+.gv-file{font-family:var(--font-mono);font-size:12px;border:1px dashed var(--rule);border-radius:2px;
+  padding:8px 6px;margin:0 0 8px;color:var(--faint);background:var(--card);transition:all .2s}
+.gv-state{display:block;font-family:var(--font-mono);font-size:10.5px;color:var(--faint);transition:color .2s}
+.gv-stage.gv-edited .gv-file{border:1px solid var(--warn);background:var(--warn-bg);color:var(--warn)}
+.gv-stage.gv-edited .gv-state{color:var(--warn)}
+.gv-stage.gv-staged .gv-file{border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent)}
+.gv-stage.gv-staged .gv-state{color:var(--accent)}
+.gv-stage.gv-committed .gv-file{border:1px solid var(--ok);background:var(--ok-bg);color:var(--ok)}
+.gv-stage.gv-committed .gv-state{color:var(--ok)}
+.gv-stage.gv-pushed .gv-file{border:1px solid var(--remote);background:var(--remote-bg);color:var(--remote)}
+.gv-stage.gv-pushed .gv-state{color:var(--remote)}
+.gv-arrow{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:60px;
+  font-family:var(--font-mono);font-size:10px;color:var(--faint);text-align:center;padding:0 2px;transition:color .2s}
+.gv-arrow.gv-active{color:var(--accent);font-weight:600}
+.gv-controls{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 0}
+.gv-controls button{flex:1 1 auto;font-family:var(--font-mono);font-size:12px;cursor:pointer;
+  background:var(--paper);border:1px solid var(--rule);color:var(--ink);padding:10px 8px;border-radius:2px}
+.gv-controls button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.gv-controls button:disabled{opacity:.35;cursor:default}
+.gv-controls .gv-reset{flex:0 0 auto;color:var(--mid)}
+.gv-msg{font-size:13px;color:var(--mid);margin:12px 0 0;min-height:36px;line-height:1.7}
+@media (max-width:560px){.gv-stages{flex-direction:column}.gv-arrow{width:auto;padding:6px 0}}
 
 /* ================= iOS / モバイル調整 ================= */
 html{-webkit-text-size-adjust:100%}

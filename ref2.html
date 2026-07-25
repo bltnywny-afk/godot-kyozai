@@ -24,10 +24,50 @@ document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
 
   <p>Gitは「ファイルの変更履歴を記録する道具」、GitHubは「その履歴をネット上に置いて、公開したり他の端末と共有したりする場所」です。このサイト自体も、Gitで記録してGitHubで公開しています。</p>
 
+  <h3>状態がどう変わるか</h3>
+  <p>ボタンを順に押して、1つのファイルの変更が「作業ディレクトリ → ステージ → ローカルリポジトリ → GitHub」の4か所をどう移っていくか見てください。押した段階までしか色が付かない＝その先にはまだ変更が届いていない、という意味です。</p>
+
+  <div class="gitviz" id="gitviz">
+    <div class="gv-stages">
+      <div class="gv-stage gv-clean">
+        <span class="gv-label">作業ディレクトリ</span>
+        <div class="gv-file">index.html</div>
+        <span class="gv-state">変更なし</span>
+      </div>
+      <div class="gv-arrow">git add</div>
+      <div class="gv-stage gv-clean">
+        <span class="gv-label">ステージ</span>
+        <div class="gv-file">index.html</div>
+        <span class="gv-state">変更なし</span>
+      </div>
+      <div class="gv-arrow">git commit</div>
+      <div class="gv-stage gv-clean">
+        <span class="gv-label">ローカルリポジトリ</span>
+        <div class="gv-file">index.html</div>
+        <span class="gv-state">変更なし</span>
+      </div>
+      <div class="gv-arrow">git push</div>
+      <div class="gv-stage gv-clean">
+        <span class="gv-label">GitHub（リモート）</span>
+        <div class="gv-file">index.html</div>
+        <span class="gv-state">変更なし</span>
+      </div>
+    </div>
+    <div class="gv-controls">
+      <button data-act="edit">① ファイルを編集する</button>
+      <button data-act="add">② git add</button>
+      <button data-act="commit">③ git commit</button>
+      <button data-act="push">④ git push</button>
+      <button class="gv-reset" data-act="reset">↺ 最初から</button>
+    </div>
+    <p class="gv-msg">「① ファイルを編集する」を押して、変更がどう伝わっていくか見てください。</p>
+  </div>
+
   <h3>出てくる言葉</h3>
   <table>
     <tr><th>言葉</th><th>意味</th></tr>
     <tr><td><strong>リポジトリ</strong></td><td>変更履歴ごと管理されているフォルダ</td></tr>
+    <tr><td><strong>ステージ</strong></td><td>次のコミットに含める変更を、仮に置いておく場所</td></tr>
     <tr><td><strong>コミット</strong></td><td>「ここまでの変更」を1つの記録として保存すること</td></tr>
     <tr><td><strong>プッシュ</strong></td><td>手元の記録をGitHub（リモート）へ送ること</td></tr>
     <tr><td><strong>プル</strong></td><td>GitHub側の記録を手元へ取り込むこと</td></tr>
