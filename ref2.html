@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ノードの木">
+<meta name="theme-color" content="#161a18">
+<title>付録：Gitとgithubの使い方 — ノードの木</title>
+<link rel="stylesheet" href="assets/style.css">
+<script>
+try{var t=JSON.parse(localStorage.getItem('godot-kyozai-v1')||'{}').theme;
+document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
+</script>
+</head>
+<body data-page="lesson" data-id="ref2">
+<header class="topbar"><a href="index.html">◂ もくじ</a><span class="tbt">付録／付録：Gitとgithubの使い方</span><a class="nav-next" href="#"></a></header>
+<div class="lwrap">
+<main>
+<section id="ref2" data-title="付録：Gitとgithubの使い方">
+  <p class="eyebrow">付録 · 随時参照</p>
+  <h2>Gitとgithubの使い方</h2>
+  <p class="aim">この付録のねらい：変更を安全に記録し、GitHubで公開する一連の流れを覚える。</p>
+
+  <p>Gitは「ファイルの変更履歴を記録する道具」、GitHubは「その履歴をネット上に置いて、公開したり他の端末と共有したりする場所」です。このサイト自体も、Gitで記録してGitHubで公開しています。</p>
+
+  <h3>出てくる言葉</h3>
+  <table>
+    <tr><th>言葉</th><th>意味</th></tr>
+    <tr><td><strong>リポジトリ</strong></td><td>変更履歴ごと管理されているフォルダ</td></tr>
+    <tr><td><strong>コミット</strong></td><td>「ここまでの変更」を1つの記録として保存すること</td></tr>
+    <tr><td><strong>プッシュ</strong></td><td>手元の記録をGitHub（リモート）へ送ること</td></tr>
+    <tr><td><strong>プル</strong></td><td>GitHub側の記録を手元へ取り込むこと</td></tr>
+    <tr><td><strong>リモート</strong></td><td>GitHubなど、ネット上にあるリポジトリの置き場所</td></tr>
+    <tr><td><strong>ブランチ</strong></td><td>本流から分かれて作業できる並行の履歴</td></tr>
+    <tr><td><strong>クローン</strong></td><td>GitHub上のリポジトリを手元にまるごと複製すること</td></tr>
+  </table>
+
+  <h3>基本の3手順</h3>
+  <p>ファイルを変更したら、次の3つを順に行います。</p>
+
+  <pre><code>git status          # 何が変わったか確認する
+git add .           # 変更をコミットの対象に含める
+git commit -m "説明" # 変更を1つの記録として保存する</code></pre>
+
+  <p><code>git status</code>は変更されたファイルの一覧を教えてくれます。何が起きるか分からないときは、まずこれを打つ癖をつけておくと安心です。<code>-m</code>のあとの説明は「何を・なぜ変えたか」を短く書きます。あとで履歴を見返したときに、ここだけが手がかりになります。</p>
+
+  <h3>GitHubへ公開する</h3>
+  <p>コミットは手元のパソコンの中だけの記録です。GitHub上に置いてあるリポジトリへ送るには、もう1手順必要です。</p>
+
+  <pre><code>git push            # 手元のコミットをGitHubへ送る</code></pre>
+
+  <p>このサイトはGitHub Pagesという仕組みで公開されているので、<code>git push</code>が終わると、1〜3分ほどで公開ページにも同じ内容が反映されます。逆に言うと、<strong>コミットしただけ・pushし忘れた変更は、公開ページには一切反映されません。</strong></p>
+
+  <div class="check"><b>ここで確認</b><p>変更後に<code>git status</code>を打って「何も表示されない（nothing to commit）」なら、コミットまで済んでいる。さらに手元とGitHubの内容を揃えたいなら、pushまで行う。</p></div>
+
+  <h3>いつコミットするか</h3>
+  <p>「1コミット1目的」が基本です。1つの回の追加、1つの誤字修正、1つの機能変更、というように、あとから見て意味のかたまりが分かる単位で区切ります。1回の変更にいろいろな用件を詰め込むと、あとで「どの変更が原因か」を追えなくなります。</p>
+
+  <h3>やってしまいがちな詰まりどころ</h3>
+  <div class="note"><b>変更したのに公開に反映されない</b><p>ほとんどの場合、<code>git commit</code>までで止まっていて<code>git push</code>を忘れています。<code>git status</code>で確認し、<code>git log --oneline</code>で直近のコミットが並んでいるかも見ておくと分かりやすいです。</p></div>
+
+  <div class="note"><b>コミットメッセージを書かずに止まる</b><p><code>git commit</code>だけ打つとエディタが開いて操作に迷うことがあります。<code>git commit -m "説明"</code>のように<code>-m</code>で直接書いてしまうのが簡単です。</p></div>
+
+  <div class="try"><b>やってみる</b><p>このサイトのどこか（誤字でもよい）を少し直し、<code>git status</code>→<code>git add .</code>→<code>git commit -m "説明"</code>→<code>git push</code>の順に打ってみる。数分待ってから公開ページを開き、直った内容が反映されているか確かめる。</p></div>
+</section>
+<nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
+</main>
+<aside class="codepanel" id="codepanel" aria-label="コード">
+  <div class="ph">
+    <div class="phtop">
+      <span class="pf none" id="pfile">スクリプト</span>
+      <button class="copy" id="copybtn">コピー</button>
+    </div>
+    <span class="pt" id="ptitle">本文の「コードを表示」から開きます</span>
+  </div>
+  <div class="pb" id="pbody"><div class="hint">本文の「コードを表示」を押すと、ここに出ます。<br><br>開いたコードは本文をスクロールしても残るので、手順を読みながら書き写すときに使ってください。</div></div>
+  <div class="list" id="plist"></div>
+</aside>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -7,8 +7,8 @@ Godot 4 でのゲームづくりを独学するための静的サイト。ビル
 
 ```
 index.html      ダッシュボード（進捗・一覧・同期・配色切替）
-<id>.html       各回のページ（43枚）。id は s0〜s20, s7a, s7b, g1, g2,
-                t1〜t7（第5部）, p0〜p9（実践）, ref（付録）
+<id>.html       各回のページ（44枚）。id は s0〜s20, s7a, s7b, g1, g2,
+                t1〜t7（第5部）, p0〜p9（実践）, ref, ref2（付録）
 assets/style.css  全ページ共通。CSS変数でダーク（既定）/ライト
 assets/app.js     全ロジック。先頭に LESSONS マニフェスト（JSON）
 ```
