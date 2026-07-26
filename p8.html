@@ -26,6 +26,16 @@ document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
 
   <p>アクション性はありませんが、別の難しさがあります。<strong>要素が増えるほど互いに影響し合う</strong>ため、設計が甘いと途中で手が入れられなくなります。B4でやったデータとロジックの分離が、ここで本番を迎えます。</p>
 
+  <h3>画面のイメージ</h3>
+  <div class="mockwrap">
+    <div class="mock" style="aspect-ratio:4/3">
+      <div class="mock-el ui" style="left:0%;top:0%;width:100%;height:12%">概要｜商品｜従業員｜施設</div>
+      <div class="mock-el bg" style="left:4%;top:16%;width:92%;height:60%">選んだタブの表とグラフ</div>
+      <div class="mock-el fx" style="left:62%;top:80%;width:34%;height:16%">1日終了パネル</div>
+    </div>
+    <p class="mockcap">上のタブで画面を切り替える表主体のUI。1日の終わりに収支パネルが出る</p>
+  </div>
+
   <h3>構成 — ロジックはUIを知らない</h3>
   <pre><code>Main
 ├─ SimClock (Node)       ← 1日／1週を進める

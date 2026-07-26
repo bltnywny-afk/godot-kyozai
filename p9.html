@@ -26,6 +26,17 @@ document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
 
   <p>最後です。中身の大半は<strong>ここまでの8本の組み合わせ</strong>になります。作物の成長はB8の時間進行、猫ヘルパーの移動はB5の移動処理、UIはB4で覚えたもの。新しく学ぶのは<strong>ウィンドウ制御だけ</strong>です。だから最後に置いています。</p>
 
+  <h3>画面のイメージ</h3>
+  <div class="mockwrap">
+    <div class="mock desktop" style="aspect-ratio:4/3">
+      <div class="mock-el ui" style="left:20%;top:2%;width:60%;height:9%">つかんで移動</div>
+      <div class="mock-el bg" style="left:10%;top:18%;width:80%;height:66%">畑</div>
+      <div class="mock-el obj" style="left:18%;top:28%;width:15%;height:20%">ネコ</div>
+      <div class="mock-el ui" style="left:82%;top:86%;width:14%;height:11%">≡</div>
+    </div>
+    <p class="mockcap">枠なし・透過ウィンドウ。市松模様の部分はデスクトップが透けて見えているところ</p>
+  </div>
+
   <h3>構成</h3>
   <pre><code>Desktop (Node2D)
 ├─ Farm (Node2D)          ← 畑・作物

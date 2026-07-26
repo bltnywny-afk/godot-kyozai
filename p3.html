@@ -39,6 +39,24 @@ document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
     <p><strong>3. 人数分のデータは配列で持つ。</strong>変数を <code>score1</code> <code>score2</code> と並べると、3人目を足すときに全部書き直しになります。最初から配列にしておけば、人数は何人でも同じコードで動きます。</p>
   </div>
 
+  <h3>画面のイメージ</h3>
+  <div class="mockwrap">
+    <div class="mock" style="aspect-ratio:480/320">
+      <div class="mock-el ui" style="left:0%;top:0%;width:100%;height:14%">ターン｜スコア｜のこり時間</div>
+      <div class="mock-el bg" style="left:6%;top:20%;width:88%;height:72%">Board</div>
+      <div class="mock-el bg" style="left:11%;top:26%;width:20%;height:19%">穴</div>
+      <div class="mock-el obj" style="left:40%;top:26%;width:20%;height:19%">モグラ</div>
+      <div class="mock-el bg" style="left:69%;top:26%;width:20%;height:19%">穴</div>
+      <div class="mock-el bg" style="left:11%;top:49%;width:20%;height:19%">穴</div>
+      <div class="mock-el bg" style="left:40%;top:49%;width:20%;height:19%">穴</div>
+      <div class="mock-el obj" style="left:69%;top:49%;width:20%;height:19%">モグラ</div>
+      <div class="mock-el bg" style="left:11%;top:72%;width:20%;height:17%">穴</div>
+      <div class="mock-el bg" style="left:40%;top:72%;width:20%;height:17%">穴</div>
+      <div class="mock-el bg" style="left:69%;top:72%;width:20%;height:17%">穴</div>
+    </div>
+    <p class="mockcap">横480×320。3×3の穴からモグラがランダムに顔を出す。上部にターン・スコア・残り時間</p>
+  </div>
+
   <h3>ノード構成（完成形）</h3>
   <pre><code>main.tscn
 Main (Node2D)                    ← main.gd

@@ -300,6 +300,26 @@ h3.st{display:block}
 .sketch p{margin:0 0 10px}
 .sketch p:last-child{margin-bottom:0}
 
+/* ---- 画面イメージ（矩形モックアップ） ---- */
+.mockwrap{margin:0 0 22px}
+.mock{position:relative;width:100%;max-width:380px;margin:0 auto;
+  background:var(--paper);border:1px solid var(--rule);border-radius:3px;overflow:hidden}
+.mock-el{position:absolute;border:1px solid var(--rule);border-radius:2px;box-sizing:border-box;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-family:var(--font-mono);font-size:9.5px;line-height:1.25;color:var(--mid);
+  background:var(--card);padding:2px;overflow:hidden}
+.mock-el.bg{border-style:dashed;color:var(--faint)}
+.mock-el.obj{background:var(--accent-soft);border-color:var(--accent);border-style:solid;color:var(--accent);font-weight:600;z-index:2}
+.mock-el.ui{background:var(--ok-bg);border-color:var(--ok);border-style:solid;color:var(--ok);z-index:3}
+.mock-el.fx{background:var(--warn-bg);border-color:var(--warn);border-style:solid;color:var(--warn);z-index:4}
+.mock.desktop{border-style:dashed;background-color:var(--paper);background-image:
+  linear-gradient(45deg,var(--card) 25%,transparent 25%),
+  linear-gradient(-45deg,var(--card) 25%,transparent 25%),
+  linear-gradient(45deg,transparent 75%,var(--card) 75%),
+  linear-gradient(-45deg,transparent 75%,var(--card) 75%);
+  background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0}
+.mockcap{text-align:center;font-family:var(--font-mono);font-size:11px;color:var(--mid);margin:8px 0 0}
+
 /* ---- Git状態遷移ビジュアル ---- */
 .gitviz{border:1px solid var(--rule);border-radius:2px;background:var(--card);padding:20px 20px 18px;margin:0 0 22px}
 .gv-stages{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}

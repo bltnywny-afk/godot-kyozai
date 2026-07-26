@@ -43,6 +43,21 @@ document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
     <p><strong>3. ステージは複製して作る。</strong>5面をゼロから5回作るのではありません。1面を完成させ、それを複製して地形を描き替えます。<strong>1面目の作りが、そのまま5面分の作りになります。</strong>だから1面目は丁寧に作ってください。</p>
   </div>
 
+  <h3>画面のイメージ</h3>
+  <div class="mockwrap">
+    <div class="mock" style="aspect-ratio:320/180">
+      <div class="mock-el bg" style="left:0%;top:0%;width:100%;height:68%">空</div>
+      <div class="mock-el bg" style="left:0%;top:68%;width:100%;height:32%">地形</div>
+      <div class="mock-el obj" style="left:12%;top:46%;width:9%;height:22%">Player</div>
+      <div class="mock-el obj" style="left:42%;top:48%;width:9%;height:20%">敵</div>
+      <div class="mock-el fx" style="left:60%;top:52%;width:6%;height:9%">金貨</div>
+      <div class="mock-el obj" style="left:86%;top:32%;width:9%;height:36%">ゴール</div>
+      <div class="mock-el ui" style="left:2%;top:3%;width:20%;height:9%">♥♥♥</div>
+      <div class="mock-el ui" style="left:78%;top:3%;width:20%;height:9%">コイン数</div>
+    </div>
+    <p class="mockcap">横320×180。地形の上をPlayerが走り、敵を倒し、コインを集めて右のゴールへ</p>
+  </div>
+
   <h3>ノード構成（完成形）</h3>
   <pre><code>level_1.tscn
 Level (Node2D)                   ← level.gd
