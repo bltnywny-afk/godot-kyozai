@@ -300,6 +300,19 @@ h3.st{display:block}
 .sketch p{margin:0 0 10px}
 .sketch p:last-child{margin-bottom:0}
 
+/* ---- Godot関数のホバー解説 ---- */
+.gfn{border-bottom:1px dotted var(--accent);cursor:help}
+.gfn-tip{position:fixed;z-index:90;max-width:260px;background:var(--card);color:var(--ink);
+  border:1px solid var(--accent);border-radius:3px;padding:8px 11px;font-family:var(--font-body);
+  font-size:12.5px;line-height:1.65;box-shadow:0 4px 16px var(--shadow);pointer-events:none;
+  display:none}
+.gfn-tip.on{display:block}
+.fnref{margin:0 0 26px}
+.fnref h4{font-size:13px;font-family:var(--font-mono);letter-spacing:.06em;color:var(--accent);
+  margin:22px 0 8px}
+.fnref table{margin:0 0 4px}
+.fnref td:first-child{font-family:var(--font-mono);font-size:12.5px;white-space:nowrap;color:var(--ink)}
+
 /* ---- 画面イメージ（矩形モックアップ） ---- */
 .mockwrap{margin:0 0 22px}
 .mock{position:relative;width:100%;max-width:380px;margin:0 auto;

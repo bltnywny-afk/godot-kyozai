@@ -13,6 +13,157 @@ var track=LESSONS.filter(function(l){return l.kind==='lesson'||l.kind==='build';
 var lessons=LESSONS.filter(function(l){return l.kind==='lesson';});
 var builds=LESSONS.filter(function(l){return l.kind==='build';});
 
+/* ===== Godot関数・キーワードの用語集 ===== */
+var GFN_CATS=[
+['ライフサイクル関数',[
+['_ready','ノードがシーンツリーに入り、準備が整った直後に一度だけ呼ばれる'],
+['_process','毎フレーム（描画のたび）に呼ばれる。演出や時間経過に使う'],
+['_physics_process','物理フレームごと（既定60回/秒）に呼ばれる。移動や当たり判定はここに書く'],
+['_input','すべての入力イベントを受け取る'],
+['_unhandled_input','他で処理されなかった入力イベントを受け取る']]],
+['ノード・シーン操作',[
+['add_child','子ノードとして追加する'],
+['queue_free','このフレームの終わりに、ノードを安全に破棄する'],
+['get_node','指定したパスの子ノードを取得する（$パスの正式な書き方）'],
+['get_parent','親ノードを取得する'],
+['get_children','子ノードの一覧を取得する'],
+['get_child','指定した番号の子ノードを取得する'],
+['get_child_count','子ノードの数を取得する'],
+['instantiate','PackedScene（.tscn）から実体（ノード）をつくる'],
+['is_in_group','指定したグループに属しているか調べる'],
+['get_tree','シーン全体を管理するSceneTreeを取得する'],
+['create_timer','一定時間後に一度だけ知らせるタイマーをつくる（get_tree()と組み合わせる）'],
+['change_scene_to_packed','シーンを切り替える（PackedScene指定）'],
+['change_scene_to_file','シーンを切り替える（パス指定）'],
+['reload_current_scene','いまのシーンを最初からやり直す'],
+['get_nodes_in_group','指定したグループに属する全ノードを取得する']]],
+['シグナル',[
+['signal','自分だけの合図（シグナル）を宣言するキーワード'],
+['connect','シグナルが起きたときに呼ぶ関数を登録する'],
+['emit','シグナルを発行する（起きたことを知らせる）'],
+['has_method','そのオブジェクトに指定した名前のメソッドがあるか調べる'],
+['bind','Callable（関数の参照）にあらかじめ引数を結びつけておく']]],
+['入力',[
+['is_action_just_pressed','指定したアクションが、いまのフレームで押されたかを調べる'],
+['get_axis','2つのアクション（例：左と右）から-1〜1の値をまとめて得る']]],
+['移動・物理',[
+['move_and_slide','CharacterBody2D/3Dを、壁に沿って滑るように移動させる'],
+['is_on_floor','床に接しているかを調べる'],
+['is_on_wall','壁に接しているかを調べる'],
+['is_colliding','RayCast2Dが何かに当たっているかを調べる'],
+['move_toward','現在の値を目標の値へ、指定した量だけ近づける'],
+['normalized','ベクトルの向きだけを残し、長さを1にする'],
+['angle','ベクトルの向き（角度）を返す']]],
+['アニメーション・演出',[
+['create_tween','値を滑らかに変化させるTween（トゥイーン）をつくる'],
+['tween_property','指定したプロパティを、目標値まで滑らかに変化させる'],
+['tween_callback','Tweenの途中や最後に、指定した関数を呼ぶ'],
+['play','アニメーションや音を再生する'],
+['play_backwards','アニメーションを逆向きに再生する'],
+['hide','ノードを非表示にする'],
+['show','ノードを表示する'],
+['start','タイマーやアニメーションなどを開始する'],
+['stop','タイマーなどを停止する']]],
+['値・数学',[
+['Vector2','2次元の座標や大きさを表す型'],
+['Vector2i','整数版のVector2'],
+['Color','色を表す型（赤・緑・青・不透明度）'],
+['randf_range','指定した範囲でランダムな小数を返す'],
+['randi','ランダムな整数を返す'],
+['abs','絶対値（符号を取り除いた値）を返す'],
+['min','小さい方の値を返す'],
+['max','大きい方の値を返す'],
+['ceil','小数点以下を切り上げる'],
+['floori','小数点以下を切り捨てて整数にする'],
+['sin','サイン。なめらかな波の形をつくるのによく使う'],
+['str','値を文字列に変換する'],
+['int','値を整数に変換する'],
+['new','そのクラスの新しいインスタンス（実体）をつくる']]],
+['配列・データ',[
+['is_empty','配列や文字列が空かどうかを調べる'],
+['pick_random','配列からランダムに1つ選ぶ'],
+['shuffle','配列の中身をシャッフルする'],
+['append','配列の末尾に値を追加する'],
+['pop_front','配列の先頭を取り出して削除する'],
+['filter','条件に合う要素だけを残した配列をつくる']]],
+['保存・読み込み',[
+['open','ファイルを開く（例：FileAccess.open(パス, モード)）。保存・読み込みに使う'],
+['store_string','文字列をそのままファイルに書き込む'],
+['parse_string','JSON文字列を読み取って値に変換する'],
+['get_as_text','ファイルの中身を文字列として取得する'],
+['file_exists','指定パスにファイルがあるかどうかを調べる'],
+['stringify','値をJSON文字列に変換する']]],
+['オブジェクト操作',[
+['set_deferred','いまのフレームの処理が終わってから、プロパティを変更する'],
+['get_meta','ノードに付けた自由な情報を取り出す'],
+['set_meta','ノードに自由な情報を付け加える'],
+['duplicate','複製をつくる'],
+['is_instance_valid','ノードの実体がまだ残っているかを調べる（queue_free後の確認などに使う）']]],
+['キーワード',[
+['func','関数を定義するキーワード'],
+['extends','どのノード／クラスを土台にするか指定するキーワード'],
+['class_name','このスクリプトに名前をつけ、型として使えるようにする'],
+['const','変わらない値（定数）を宣言する'],
+['enum','決まった選択肢の集まりを定義する'],
+['@export','Godotエディタ上で値を編集できるようにする'],
+['@onready','_ready()の直前に自動で代入する（子ノード取得によく使う）'],
+['await','完了するまで処理を一時停止して待つ'],
+['self','自分自身（このスクリプトが付いたノード）を指す'],
+['pass','何もしない、という意味の空の処理'],
+['match','値によって処理を分岐する（switch文に近い）']]],
+['よく使うプロパティ',[
+['position','ノードの位置（親からの相対座標）'],
+['global_position','ノードの位置（ワールド全体での座標）'],
+['rotation','回転角度（ラジアン）'],
+['scale','拡大縮小率'],
+['modulate','色を掛け合わせて変える（半透明・点滅などに使う）'],
+['visible','表示されているかどうか']]],
+['Gitコマンド',[
+['git status','変更されたファイルの一覧を確認する'],
+['git add','変更をステージ（次のコミットに含めるもの）に追加する'],
+['git commit','ステージの内容を1つの記録として保存する'],
+['git push','手元のコミットをGitHub（リモート）へ送る']]]
+];
+var GFN={};GFN_CATS.forEach(function(c){c[1].forEach(function(p){GFN[p[0]]=p[1];});});
+var GFN_ALLKEYS=Object.keys(GFN).filter(function(k){return k.charAt(0)!=='@';});
+function reEsc(k){return k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+var GFN_PHRASES=GFN_ALLKEYS.filter(function(k){return k.indexOf(' ')>=0;})
+.sort(function(a,b){return b.length-a.length;})
+.map(function(k){return reEsc(k).replace(/\\ /g,'\\s+');});
+var GFN_WORDS=GFN_ALLKEYS.filter(function(k){return k.indexOf(' ')<0;})
+.sort(function(a,b){return b.length-a.length;})
+.map(reEsc);
+var GFN_RE=new RegExp('(\\$[A-Za-z_][A-Za-z0-9_/]*)|(@export|@onready)'+
+(GFN_PHRASES.length?'|\\b('+GFN_PHRASES.join('|')+')\\b':'')+
+'|\\b('+GFN_WORDS.join('|')+')\\b','g');
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function escapeAttr(s){return escapeHtml(s).replace(/"/g,'&quot;');}
+function highlightCode(text){
+return escapeHtml(text).replace(GFN_RE,function(m,dollar,at,phrase,word){
+var tip;
+if(dollar)tip='get_node("'+dollar.slice(1)+'") の省略形。子ノード「'+dollar.slice(1)+'」を取得する';
+else if(phrase)tip=GFN[m.replace(/\s+/g,' ')];
+else tip=GFN[at||word];
+if(!tip)return m;
+return '<span class="gfn" data-tip="'+escapeAttr(tip)+'">'+m+'</span>';});}
+
+/* ===== 関数名ホバーの簡易解説 ===== */
+(function(){
+var tip=document.createElement('div');tip.className='gfn-tip';document.body.appendChild(tip);
+var cur=null;
+function place(el){var r=el.getBoundingClientRect();
+tip.textContent=el.dataset.tip;tip.classList.add('on');
+var tw=tip.offsetWidth,th=tip.offsetHeight;
+var left=Math.max(4,Math.min(r.left,window.innerWidth-4-tw));
+var top=r.top-th-8;if(top<4)top=r.bottom+8;
+tip.style.left=left+'px';tip.style.top=top+'px';}
+function hide(){tip.classList.remove('on');cur=null;}
+document.addEventListener('mouseover',function(e){var t=e.target.closest&&e.target.closest('.gfn');if(t){cur=t;place(t);}});
+document.addEventListener('mouseout',function(e){var t=e.target.closest&&e.target.closest('.gfn');if(t)hide();});
+document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('.gfn');
+if(t){e.stopPropagation();if(cur===t){hide();}else{cur=t;place(t);}}else hide();});
+})();
+
 function copyText(txt,btn,ok){var old=btn.textContent;
 function y(){btn.textContent=ok;setTimeout(function(){btn.textContent=old;},1500);}
 function f(){var ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
@@ -86,6 +237,14 @@ gvBtn.push.addEventListener('click',function(){gvStage=4;gvPaint();});
 gvBtn.reset.addEventListener('click',function(){gvStage=0;gvPaint();});
 gvPaint();}
 
+// 関数リファレンス（付録）
+var fnref=sec&&sec.querySelector('#fnref');
+if(fnref){var fh='';GFN_CATS.forEach(function(c){
+fh+='<h4>'+c[0]+'</h4><table>';
+c[1].forEach(function(p){fh+='<tr><td><code>'+escapeHtml(p[0])+'</code></td><td>'+escapeHtml(p[1])+'</td></tr>';});
+fh+='</table>';});
+fnref.innerHTML=fh;}
+
 // コードカード
 var panel=document.getElementById('codepanel');
 var wide=window.matchMedia('(min-width:1150px)');
@@ -105,6 +264,7 @@ if(!title)title=me.title;return(step?step+' · ':'')+title;}
 var seen={};
 Array.prototype.slice.call(sec.querySelectorAll('pre')).forEach(function(pre){
 var txt=pre.textContent;if(txt.indexOf('├─')>=0||txt.indexOf('└─')>=0)return;
+var codeEl=pre.querySelector('code');if(codeEl)codeEl.innerHTML=highlightCode(txt);
 var base=labelFor(pre);seen[base]=(seen[base]||0)+1;
 var label=base+(seen[base]>1?'（'+seen[base]+'）':'');
 var card=document.createElement('div');card.className='codecard';
@@ -125,7 +285,7 @@ var pf=document.getElementById('pfile');
 pf.textContent=card.dataset.file||'ファイル名の指定なし（説明用の断片）';
 pf.classList.toggle('none',!card.dataset.file);
 document.getElementById('ptitle').textContent=card.dataset.label;
-ppre.firstChild.textContent=card.dataset.code;
+ppre.firstChild.innerHTML=highlightCode(card.dataset.code);
 var pb=document.getElementById('pbody');
 if(pb.firstElementChild&&pb.firstElementChild.className==='hint')pb.removeChild(pb.firstElementChild);
 if(!ppre.parentNode)pb.appendChild(ppre);pb.scrollTop=0;
