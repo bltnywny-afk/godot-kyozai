@@ -18,7 +18,7 @@ document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
 <div class="lwrap">
 <main>
 <section id="p1" data-kind="build" data-title="バスの押しボタン" data-file="main.gd">
-  <p class="eyebrow">実践 B1 · 全7ステップ · 規模：3〜5日</p>
+  <p class="eyebrow">実践 B1 · 全9ステップ · 規模：3〜5日</p>
   <h2>バスの押しボタン</h2>
   <p class="aim">新しく覚える：状態を enum で持つ／世界を動かして止める／Tweenで減速する／awaitで演出を順番に流す。</p>
 
@@ -40,24 +40,24 @@ document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
 
   <h3>画面のイメージ</h3>
   <div class="mockwrap">
-    <div class="mock" style="aspect-ratio:320/480">
-      <div class="mock-el bg" style="left:0%;top:0%;width:100%;height:52%">空</div>
-      <div class="mock-el bg" style="left:4%;top:16%;width:34%;height:22%">流れる背景</div>
-      <div class="mock-el bg" style="left:4%;top:40%;width:18%;height:15%">停留所</div>
-      <div class="mock-el obj" style="left:30%;top:38%;width:48%;height:24%">Bus</div>
-      <div class="mock-el obj" style="left:74%;top:34%;width:12%;height:9%">ランプ</div>
-      <div class="mock-el obj" style="left:74%;top:48%;width:10%;height:13%">ドア</div>
-      <div class="mock-el obj" style="left:86%;top:50%;width:9%;height:11%">客</div>
-      <div class="mock-el ui" style="left:0%;top:62.5%;width:100%;height:37.5%"></div>
-      <div class="mock-el ui" style="left:32%;top:76%;width:36%;height:16%">STOPボタン</div>
+    <div class="mock" style="aspect-ratio:320/660">
+      <div class="mock-el bg" style="left:0%;top:0%;width:100%;height:33%">空</div>
+      <div class="mock-el bg" style="left:4%;top:20%;width:30%;height:7%">背景</div>
+      <div class="mock-el obj" style="left:28%;top:21%;width:38%;height:9%">バス</div>
+      <div class="mock-el bg" style="left:76%;top:22%;width:10%;height:8%">停</div>
+      <div class="mock-el bg" style="left:0%;top:30%;width:100%;height:3%">道路</div>
+      <div class="mock-el ui" style="left:11%;top:37%;width:78%;height:59%"></div>
+      <div class="mock-el fx" style="left:16%;top:42%;width:68%;height:18%">とまります</div>
+      <div class="mock-el obj" style="left:30%;top:67%;width:40%;height:21%;z-index:5">丸ボタン</div>
     </div>
-    <p class="mockcap">縦320×480。上62.5%がバスの走行シーン、下37.5%が押しボタンのUIパネル</p>
+    <p class="mockcap">スマホ実機での見え方。上1/3がバス（脇役）、下2/3が押しボタン（主役）。「とまります」は押すと赤く点灯する</p>
   </div>
 
   <h3>ノード構成（完成形）</h3>
   <pre><code>Main (Node2D)                  ← main.gd
-├─ TopView (Node2D)
+├─ TopView (Node2D)             ← 原点は画面の上から1/3の線
 │  ├─ Sky (ColorRect)
+│  ├─ Road (ColorRect)          ← バスが走る道路
 │  ├─ Scenery (Node2D)          ← 左へ流れる背景
 │  │  ├─ BgA (Sprite2D)
 │  │  └─ BgB (Sprite2D)
@@ -65,14 +65,19 @@ document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
 │  │  └─ Sign (Sprite2D)
 │  ├─ Bus (Node2D)              ← 画面中央に固定
 │  │  ├─ Body (Sprite2D)
-│  │  ├─ Door (Sprite2D)
-│  │  └─ Lamp (Sprite2D)        ← 「とまります」
+│  │  └─ Door (Sprite2D)
 │  └─ Passenger (Sprite2D)
 ├─ UI (CanvasLayer)
-│  ├─ Panel (ColorRect)
-│  └─ StopButton (Button)
+│  └─ ButtonArea (Control)      ← 画面の下2/3。アンカーで決まる
+│     ├─ Bg (ColorRect)         ← 車内の壁
+│     └─ ButtonUnit (Button)    ← ★主役。ここ全体が当たり判定
+│        ├─ Display (ColorRect) ← 表示窓。押すと赤く光る
+│        │  └─ Lamp (Label)     ← 「とまります」
+│        └─ Knob (Panel)        ← 丸い押しボタン（見た目だけ）
 ├─ Chime (AudioStreamPlayer)
 └─ DoorSound (AudioStreamPlayer)</code></pre>
+
+  <div class="note"><b>ランプはバスではなくボタンにある</b><p>実物の路線バスは、押しボタンの表示窓そのものが「とまります」と光ります。<strong>指のすぐ下で光るほうが、幼児にとっての報酬になります。</strong>バス側にもランプを足したくなったら、それは余裕ができてからです。</p></div>
 
   <div class="note"><b>絵は後回しでいい</b><p>ピクセルアートを先に描くと、そこで力尽きます。<strong>最初は全部 ColorRect（色の四角）で作ってください。</strong>バスは黄色い長方形、乗客は小さい四角で十分です。動きが完成してから Sprite2D に差し替えます。差し替えは、ノードの型を右クリック →「型を変更」で置き換えるだけです。</p></div>
 
@@ -86,11 +91,96 @@ document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
     <tr><td>表示 → ウィンドウ</td><td>Viewport Width</td><td>320</td></tr>
     <tr><td>表示 → ウィンドウ</td><td>Viewport Height</td><td>480</td></tr>
     <tr><td>表示 → ウィンドウ</td><td>Stretch → Mode</td><td>viewport</td></tr>
-    <tr><td>表示 → ウィンドウ</td><td>Stretch → Aspect</td><td>keep</td></tr>
+    <tr><td>表示 → ウィンドウ</td><td>Stretch → Aspect</td><td><strong>expand</strong></td></tr>
     <tr><td>レンダリング → テクスチャ</td><td>Default Texture Filter</td><td>Nearest</td></tr>
   </table>
 
-  <p>縦320×480にしたのは、上下2画面にするためです。<strong>上が y=0〜300、下が y=300〜480</strong>。この配分でいきます。地面の高さは y=250 とします。</p>
+  <p>320×480 は<strong>縦長</strong>です。320が横幅、480が高さ。スマホで遊ぶので縦画面にしています。</p>
+
+  <div class="note"><b>Aspect を expand にする意味</b>
+  <p>スマホは機種ごとに画面の細長さが違います。<code>keep</code> だと 320:480 の比率を守るため、上下に黒帯が出ます。<code>expand</code> にすると黒帯なしで画面いっぱいに広がります。</p>
+  <p>かわりに、<strong>横320は固定のまま、縦の高さだけが機種ごとに変わります。</strong></p>
+  <table class="set">
+    <tr><th>端末</th><th>実際のビューポート</th></tr>
+    <tr><td>iPhone 14 相当</td><td>320 × <strong>692</strong></td></tr>
+    <tr><td>やや低い端末</td><td>320 × <strong>623</strong></td></tr>
+  </table>
+  <p>つまり <strong>X座標は今まで通り数値で書いてよい。Y座標だけが信用できない。</strong>「画面の下端は y=480」と書くと、機種によってずれます。この対処が次のステップです。</p></div>
+
+  <span class="stepnum">STEP 0.5</span>
+  <h3 class="st">画面の高さに合わせる（アンカー）</h3>
+
+  <p>縦の高さが機種ごとに変わる以上、「y=300のところにパネルを置く」という書き方はできません。かわりに<strong>割合で置きます</strong>。「上から1/3のところ」と指定しておけば、高さが何pxでも常に1/3です。</p>
+
+  <p>この割合指定の仕組みを、Godotでは<strong>アンカー</strong>と呼びます。Control系のノード（Button、Label、ColorRect など）だけが持っている機能です。</p>
+
+  <table class="set">
+    <tr><th>アンカーの値</th><th>意味</th></tr>
+    <tr><td><code>0</code></td><td>親の左端／上端</td></tr>
+    <tr><td><code>0.333</code></td><td>親の 33.3% の位置</td></tr>
+    <tr><td><code>1</code></td><td>親の右端／下端</td></tr>
+  </table>
+
+  <h4>ボタン領域をつくる</h4>
+
+  <p>UI (CanvasLayer) の下に <code>ButtonArea</code> という Control を作り、次の8つの数字を入れます。<strong>Anchor が割合、Offset がそこからのズレ（px）</strong>です。Offsetは全部0にします。</p>
+
+  <table class="set">
+    <tr><th>ノード</th><th>Anchor（左/上/右/下）</th><th>Offset</th><th>結果</th></tr>
+    <tr><td>ButtonArea</td><td>0 / <strong>0.333</strong> / 1 / 1</td><td>全部 0</td><td>画面の下2/3</td></tr>
+    <tr><td>Bg</td><td>0 / 0 / 1 / 1</td><td>全部 0</td><td>ButtonArea 全体</td></tr>
+    <tr><td>ButtonUnit</td><td>0.11 / 0.06 / 0.89 / 0.94</td><td>全部 0</td><td>領域の幅78%・高さ88%</td></tr>
+    <tr><td>Display</td><td>0.08 / 0.08 / 0.92 / 0.40</td><td>全部 0</td><td>ユニット上部の表示窓</td></tr>
+    <tr><td>Lamp (Label)</td><td>0 / 0 / 1 / 1</td><td>全部 0</td><td>Display 全体</td></tr>
+    <tr><td>Knob</td><td>0.5 / 0.7 / 0.5 / 0.7</td><td>-65 / -65 / 65 / 65</td><td>130×130 の丸</td></tr>
+  </table>
+
+  <p><code>Knob</code> だけ書き方が違います。<strong>アンカーを4つとも同じ値にすると「点」を指定したことになり</strong>、そこからOffsetで大きさを決めます。この形にすると、画面が変わってもKnobは常に130×130の正円のままです。丸くするには <code>Knob</code> に <code>StyleBoxFlat</code> を作り、<code>Corner Radius</code> を4つとも <strong>65</strong> にします。</p>
+
+  <table class="set">
+    <tr><th>ノード</th><th>そのほかの設定</th></tr>
+    <tr><td>Bg</td><td>色は車内の壁の色（クリームや薄いグレー）</td></tr>
+    <tr><td>Display</td><td>色 <code>#3a3a3a</code>（消灯状態）</td></tr>
+    <tr><td>Lamp</td><td>Text「とまります」、上下中央・左右中央ぞろえ</td></tr>
+    <tr><td>Knob</td><td><code>Pivot Offset</code> を (65, 65) ＝ サイズの半分</td></tr>
+  </table>
+
+  <div class="note"><b>これを忘れると押しても反応しません</b><p><code>Display</code>・<code>Lamp</code>・<code>Knob</code> の3つは、インスペクタの <strong>Mouse → Filter を <code>Ignore</code></strong> にしてください。</p>
+  <p>Control系のノードは既定でマウス入力を受け止めてしまいます。ボタンの上に子ノードを乗せると、<strong>子が指をせき止めて、親のButtonまで届きません。</strong>Ignoreにすると指がすり抜けて、下のButtonUnitに届きます。「見た目だけの部品」には全部これを設定します。</p></div>
+
+  <div class="note"><b>当たり判定はユニット全体</b><p>丸いKnobだけを判定にしたくなりますが、そうしません。<strong>ButtonUnit（筐体全体）が Button</strong>で、Knobはただの飾りです。見た目は丸ボタンでも、筐体のどこを触っても反応する——幼児は狙って押せないので、これが正解です。</p></div>
+
+  <h4>バス側は Node2D なのでコードで置く</h4>
+
+  <p>アンカーは Control 専用の機能です。バスの世界（TopView）は Node2D なので使えません。かわりに、<strong>1行だけコードで位置を決めます。</strong></p>
+
+  <pre><code># main.gd
+
+extends Node2D
+
+const BUS_RATIO := 1.0 / 3.0    # 上から何割をバスに使うか
+
+
+func _ready() -> void:
+    get_viewport().size_changed.connect(_layout)
+    _layout()
+
+
+func _layout() -> void:
+    $TopView.position.y = get_viewport_rect().size.y * BUS_RATIO</code></pre>
+
+  <p><code>size_changed</code> は画面の大きさが変わったときに飛ぶシグナルです。これを繋いでおくと、スマホを回しても、ブラウザの窓を伸ばしても、勝手に追従します。</p>
+
+  <div class="note"><b>TopView の原点を「境界線」に置く</b><p>ここが今回いちばん大事な工夫です。TopViewの原点（0,0）を、<strong>バスとボタンの境界線</strong>に置きます。そしてバスの世界を<strong>全部マイナスのY座標</strong>で作ります。</p>
+  <pre><code>TopView の中のY座標
+├─ y = -2000   空のいちばん上
+├─ y = -120    建物の上
+├─ y = -106    バスの屋根
+├─ y = -46     道路の上（＝バスの下端）
+└─ y = 0       ★原点。ここから下がボタン領域</code></pre>
+  <p>こうすると、画面の高さが変わったときに<strong>直す場所が「TopViewのy」1箇所だけ</strong>になります。中身のバスや道路の座標は一切さわらなくて済みます。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>F5を押すと、画面の下2/3に大きなボタンユニットが出る。「とまります」の文字が見える。<strong>ウィンドウの縦を伸び縮みさせても、1/3と2/3の比率が保たれる。</strong>ボタンを押したとき、まだ何も起きなくてよい。</p></div>
 
   <span class="stepnum">STEP 1</span>
   <h3 class="st">背景が流れる</h3>
@@ -100,16 +190,19 @@ document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
   <table class="set">
     <tr><th>ノード</th><th>型</th><th>設定</th></tr>
     <tr><td>Main</td><td>Node2D</td><td>main.gd をアタッチ（やり方は<a class="xref" data-ref="g1" href="g1.html">第6回</a>）</td></tr>
-    <tr><td>TopView</td><td>Node2D</td><td>Position (0, 0)</td></tr>
-    <tr><td>Sky</td><td>ColorRect</td><td>Size (320, 300)、水色</td></tr>
+    <tr><td>TopView</td><td>Node2D</td><td>Position は <code>_layout()</code> が決めるので触らない</td></tr>
+    <tr><td>Sky</td><td>ColorRect</td><td>Size (320, 2000)、Position (0, <strong>-2000</strong>)、水色</td></tr>
+    <tr><td>Road</td><td>ColorRect</td><td>Size (320, 46)、Position (0, <strong>-46</strong>)、灰色</td></tr>
     <tr><td>Scenery</td><td>Node2D</td><td>Position (0, 0)</td></tr>
-    <tr><td>BgA</td><td>Sprite2D または ColorRect</td><td>幅320、Position (0, 200)</td></tr>
-    <tr><td>BgB</td><td>BgA と同じ</td><td>Position (320, 200)</td></tr>
+    <tr><td>BgA</td><td>Sprite2D または ColorRect</td><td>Size (320, 74)、Position (0, <strong>-120</strong>)</td></tr>
+    <tr><td>BgB</td><td>BgA と同じ</td><td>Position (<strong>320</strong>, -120)</td></tr>
   </table>
+
+  <p>Y座標が全部マイナスなのは、STEP 0.5 で決めた通り<strong>原点が境界線にあり、上へ向かってマイナス</strong>だからです。空を2000pxも取っているのは、どんなに縦長の端末でも上端まで届かせるためです。こうしておけば空のサイズを計算し直す必要がありません。</p>
 
   <p>BgA と BgB は<strong>同じ絵を2枚</strong>並べます。1枚が左へ抜けたら、まとめて右へ戻す。これで無限にループします。</p>
 
-  <pre><code>extends Node2D
+  <pre><code># main.gd に追加
 
 const CRUISE_SPEED  := 60.0    # 走行速度（px/秒）
 const SCENERY_WIDTH := 320.0   # 背景1枚の幅
@@ -129,31 +222,30 @@ func _process(delta: float) -> void:
   <div class="check"><b>ここで確認</b><p>F5を押すと、背景が右から左へ途切れずに流れ続ける。継ぎ目でカクッと飛ばなければ成功です。</p></div>
 
   <span class="stepnum">STEP 2</span>
-  <h3 class="st">バスとボタンを置く</h3>
+  <h3 class="st">バスを置いて、ボタンとつなぐ</h3>
 
-  <p>バスは画面中央に固定です。コードでは一切動かしません。</p>
+  <p>バスは画面中央に固定です。コードでは一切動かしません。ボタンは STEP 0.5 で作ってあるので、ここでは配線だけします。</p>
 
   <table class="set">
     <tr><th>ノード</th><th>型</th><th>設定</th></tr>
-    <tr><td>Bus</td><td>Node2D</td><td>Position (160, 250)</td></tr>
+    <tr><td>Bus</td><td>Node2D</td><td>Position (160, <strong>-46</strong>)　← 道路の上</td></tr>
     <tr><td>Body</td><td>ColorRect</td><td>Size (110, 60)、Position (-55, -60)</td></tr>
     <tr><td>Door</td><td>ColorRect</td><td>Size (16, 46)、Position (16, -46)</td></tr>
-    <tr><td>Lamp</td><td>ColorRect</td><td>Size (28, 10)、Position (-14, -76)、赤</td></tr>
-    <tr><td>UI</td><td>CanvasLayer</td><td>—</td></tr>
-    <tr><td>Panel</td><td>ColorRect</td><td>Size (320, 180)、Position (0, 300)</td></tr>
-    <tr><td>StopButton</td><td>Button</td><td>Size (200, 120)、Position (60, 330)、Text「とまります」</td></tr>
+    <tr><td>Passenger</td><td>ColorRect</td><td>Size (12, 20)、色は好きな色</td></tr>
   </table>
+
+  <p><code>Body</code> と <code>Door</code> の座標は <code>Bus</code> から見た相対位置なので、STEP 0.5 の座標系に移っても<strong>変わりません</strong>。動いたのは親の <code>Bus</code> だけです。これが「原点を境界線に置く」ことの効きめです。</p>
 
   <div class="note"><b>なぜ Button か</b><p>幼児が指で押すので、<strong>当たり判定は大きく確実に</strong>する必要があります。Control系の Button は矩形が明確で、押した／離したの判定もGodotが面倒を見てくれます。Area2D でも作れますが、この用途では Button が正解です。絵ができたら <code>TextureButton</code> に差し替えます。</p></div>
 
-  <p>StopButton を選び、右の「ノード」タブから <code>pressed</code> シグナルを Main に接続します。</p>
+  <p>ButtonUnit を選び、右の「ノード」タブから <code>pressed</code> シグナルを Main に接続します。関数名は <code>_on_button_unit_pressed</code> になります。</p>
 
   <pre><code># 追加
 
-func _on_stop_button_pressed() -> void:
+func _on_button_unit_pressed() -> void:
     print("押された")</code></pre>
 
-  <div class="check"><b>ここで確認</b><p>バスが中央に立ち、下に大きなボタンがある。押すと下パネルの「出力」に文字が出る。</p></div>
+  <div class="check"><b>ここで確認</b><p>バスが道路の上に立ち、下に大きなボタンユニットがある。押すと下パネルの「出力」に文字が出る。<strong>丸ボタンの外側、筐体のふちを触っても反応する。</strong>反応しないときは、子ノードの Mouse Filter が Ignore になっているか確認してください。</p></div>
 
   <span class="stepnum">STEP 3</span>
   <h3 class="st">状態を持たせ、停留所を流す</h3>
@@ -209,7 +301,15 @@ func begin_stopping() -> void:
     state = State.STOPPING
     print("減速開始")</code></pre>
 
-  <p>停留所（BusStop）を TopView の下に作り、Sign として ColorRect を1つ入れておいてください。位置はコードが決めるので、エディタ上の位置はどこでも構いません。</p>
+  <p>停留所（BusStop）を TopView の下に作り、Sign として ColorRect を1つ入れておいてください。</p>
+
+  <table class="set">
+    <tr><th>ノード</th><th>型</th><th>設定</th></tr>
+    <tr><td>BusStop</td><td>Node2D</td><td>Position (0, <strong>-46</strong>)　← Xはコードが決める</td></tr>
+    <tr><td>Sign</td><td>ColorRect</td><td>Size (22, 16)、Position (-11, -58)</td></tr>
+  </table>
+
+  <p><strong>Yだけは自分で -46（道路の上）にしておきます。</strong>コードが書き換えるのは X だけなので、Y は編集した値がそのまま残ります。</p>
 
   <div class="note"><b>なぜ状態とフラグの両方があるのか</b><p><code>state</code> は「バスがいま物理的に何をしているか」、<code>requested</code> は「乗客が降りたいと言っているか」。別のものなので、別に持ちます。ここを1つにまとめようとすると、必ず表現できない状況が出てきます。</p></div>
 
@@ -220,37 +320,57 @@ func begin_stopping() -> void:
 
   <p>押した瞬間の反応を作ります。幼児向けでは、ここが一番大事な部分です。</p>
 
-  <pre><code># _on_stop_button_pressed を書き換える
+  <pre><code># _on_button_unit_pressed を書き換える
 
-func _on_stop_button_pressed() -> void:
+func _on_button_unit_pressed() -> void:
     press_effect()              # 手応えは必ず返す
     if requested:
         return
     if state == State.STOPPING or state == State.STOPPED:
         return                  # いま停まるところなので受け付けない
     requested = true
-    lamp.show()
+    set_lamp(true)
     $Chime.play()
 
 
 func press_effect() -> void:
     var t := create_tween()
-    t.tween_property($UI/StopButton, "scale", Vector2(0.92, 0.92), 0.06)
-    t.tween_property($UI/StopButton, "scale", Vector2.ONE, 0.12)</code></pre>
+    t.tween_property(knob, "scale", Vector2(0.88, 0.88), 0.06)
+    t.tween_property(knob, "scale", Vector2.ONE, 0.12)</code></pre>
 
-  <pre><code># 変数を追加
+  <p>沈ませるのは <strong>Knob（丸ボタン）だけ</strong>です。実物も、筐体は動かずボタンだけが沈みます。Knobは130×130の固定サイズなので、<code>Pivot Offset</code> を (65, 65) にしておけば中心から縮みます。<strong>これを設定しないと左上へ寄って縮みます。</strong></p>
 
-@onready var lamp: ColorRect = $TopView/Bus/Lamp
+  <h4>「とまります」を光らせる</h4>
+
+  <p>表示窓の色と文字の色を、消灯／点灯で入れ替えます。</p>
+
+  <pre><code># 追加
+
+const LAMP_OFF_BG := Color("#3a3a3a")   # 消灯した表示窓
+const LAMP_ON_BG  := Color("#e03b2f")   # 点灯した表示窓（赤）
+const LAMP_OFF_FG := Color("#6a6a6a")   # 消灯した文字
+const LAMP_ON_FG  := Color("#ffffff")   # 点灯した文字（白）
+
+@onready var display: ColorRect = $UI/ButtonArea/ButtonUnit/Display
+@onready var lamp: Label        = $UI/ButtonArea/ButtonUnit/Display/Lamp
+@onready var knob: Panel        = $UI/ButtonArea/ButtonUnit/Knob
+
+
+func set_lamp(on: bool) -&gt; void:
+    display.color = LAMP_ON_BG if on else LAMP_OFF_BG
+    lamp.add_theme_color_override(
+        "font_color", LAMP_ON_FG if on else LAMP_OFF_FG)
 
 
 # _ready に追加
-    lamp.hide()</code></pre>
+    set_lamp(false)</code></pre>
 
-  <div class="note"><b>設定を1つ</b><p>StopButton の <code>Pivot Offset</code> を <strong>(100, 60)</strong>（サイズの半分）にしてください。Controlノードの拡大は既定で左上を軸にするため、これを設定しないとボタンが左上へ寄って縮みます。</p></div>
+  <div class="note"><b>hide() ではなく色を変える理由</b><p>実物の表示窓は、消えているときも<strong>「とまります」の文字がうっすら見えています</strong>。消すのではなく暗くするほうが本物に近く、幼児にも「ここが光る場所だ」と伝わります。</p>
+  <p>ラベルの文字色は <code>add_theme_color_override()</code> で変えます。Labelには <code>color</code> プロパティがないので、テーマの色を個別に上書きする形になります。</p></div>
 
   <p><code>press_effect()</code> を <code>return</code> より<strong>前</strong>に置いているのが要点です。受け付けられない状況でも、押した手応えだけは必ず返ります。</p>
 
-  <div class="check"><b>ここで確認</b><p>ボタンを押すと、少し沈んで戻り、チャイムが鳴り、バスの上に赤いランプが点く。連打しても沈む動きは毎回出るが、チャイムは1回だけ。</p></div>
+  <div class="check"><b>ここで確認</b><p>ボタンを押すと、丸ボタンが少し沈んで戻り、チャイムが鳴り、<strong>「とまります」の表示窓が赤く光る。</strong>連打しても沈む動きは毎回出るが、チャイムは1回だけ。</p></div>
 
   <span class="stepnum">STEP 5</span>
   <h3 class="st">減速して、停留所にぴたりと停める</h3>
@@ -307,7 +427,7 @@ func close_door():
 
 
 func let_passenger_out():
-    passenger.position = Vector2(DOOR_X, GROUND_Y)
+    passenger.position = Vector2(DOOR_X, GROUND_Y - PASSENGER_H)
     passenger.show()
     var t := create_tween()
     t.tween_property(passenger, "position:x", DOOR_X + 46.0, 1.1)
@@ -318,7 +438,7 @@ func let_passenger_out():
 func depart() -> void:
     state = State.DEPARTING
     requested = false
-    lamp.hide()
+    set_lamp(false)
     var t := create_tween()
     t.tween_property(self, "speed", CRUISE_SPEED, 1.5)
     t.tween_callback(_on_departed)
@@ -329,8 +449,9 @@ func _on_departed() -> void:
 
   <pre><code># 定数と変数を追加
 
-const DOOR_X   := 176.0   # ドアの位置。絵に合わせて調整する
-const GROUND_Y := 250.0   # 地面の高さ
+const DOOR_X      := 176.0   # ドアの位置。絵に合わせて調整する
+const GROUND_Y    := -46.0   # 道路の上端（TopView 内のローカル座標）
+const PASSENGER_H := 20.0    # 乗客の背丈
 
 @onready var door: ColorRect       = $TopView/Bus/Door
 @onready var passenger: ColorRect  = $TopView/Passenger
@@ -338,6 +459,8 @@ const GROUND_Y := 250.0   # 地面の高さ
 
 # _ready に追加
     passenger.hide()</code></pre>
+
+  <p><code>GROUND_Y</code> がマイナスなのは、STEP 0.5 の座標系だからです。<code>ColorRect</code> は左上が原点なので、そのまま置くと道路にめり込みます。背丈のぶん引き算して、<strong>足が道路の上に来るように</strong>しています。</p>
 
   <div class="note"><b>ドアの向き</b><p><code>scale:x</code> を縮めると、既定では中心に向かって縮みます。ドアらしく片側へ引き込むには、Door の <strong><code>Centered</code> をオフ</strong>にして、原点が蝶番の側に来るように配置してください。ColorRect なら最初から左上が原点なので、そのままで自然に見えます。</p>
   <p>停留所の標識は、ここでは戻しません。<code>move_world</code> が画面外に出たときに自動で戻します。発車の瞬間に戻すと、標識が目の前で消えてしまいます。</p></div>
@@ -350,13 +473,24 @@ const GROUND_Y := 250.0   # 地面の高さ
   <p>動くようになってから、遊ぶ相手に合わせて詰めます。</p>
 
   <ul>
-    <li><strong>ボタンを大きく。</strong>指が太いので、画面幅の6割以上を使って構いません。周囲に他の押せるものを置かない。</li>
     <li><strong>音を先に、絵を後に。</strong>押した瞬間に音が出れば、それだけで「効いた」と伝わります。処理はチャイムの再生から書きます。</li>
     <li><strong>止められる状態を作らない。</strong>ポーズもメニューも要りません。閉じるのは大人の役目です。</li>
     <li><strong>速度を落とす。</strong><code>CRUISE_SPEED</code> を下げ、停留所の間隔を詰めて、押してから停まるまでを短くします。幼児は因果関係を数秒しか保持できません。</li>
-    <li><strong>ランプを点滅させる。</strong><code>create_tween().set_loops()</code> で <code>modulate:a</code> を往復させると点滅になります。</li>
+    <li><strong>ランプを点滅させる。</strong><code>create_tween().set_loops()</code> で <code>display</code> の <code>modulate:a</code> を往復させると点滅になります。</li>
     <li><strong>最後に絵を入れる。</strong>ColorRect を右クリック →「型を変更」で Sprite2D にし、Texture を割り当てます。位置とサイズはそのまま引き継がれます。</li>
   </ul>
+
+  <h4>スマホの実機で確かめる</h4>
+
+  <p>itch.io に上げて手元のスマホで遊ぶところまでが目標なので、ここで実機を触っておきます。</p>
+
+  <ul>
+    <li><strong>1回目のチャイムが鳴らないことがある。</strong>ブラウザには「ユーザーが触るまで音を出さない」という決まりがあります。<strong>タイトル画面を1枚挟んで、そこを1回タップさせてから本編に入る</strong>のが確実な対処です。</li>
+    <li><strong>縦の比率を確かめる。</strong>手持ちの機種でバス1/3・ボタン2/3になっているか。ずれていたら <code>BUS_RATIO</code> と <code>ButtonArea</code> のアンカーが揃っているか見ます。</li>
+    <li><strong>itch.io の埋め込みサイズ</strong>は縦長（<strong>400×720</strong> あたり）にし、「Mobile friendly」と「Fullscreen button」を有効にします。</li>
+  </ul>
+
+  <div class="note"><b>書き出し方は第31回</b><p>Web（HTML5）への書き出し手順そのものは<a class="xref" data-ref="t6" href="t6.html">第31回</a>にあります。itch.io へのアップロードは、書き出してできたファイル一式をzipにまとめて上げるだけです。</p></div>
 
   <div class="try"><b>完成の目安</b><p>押す → 停まる → 降りる → 発車、が延々と繰り返せる。何度押しても壊れない。押せば必ず音か動きが返る。この3つが満たせたら、B1は完成です。B2へ進んでください。</p></div>
 
@@ -422,25 +556,37 @@ const GROUND_Y := 250.0   # 地面の高さ
   <template id="ctx-p1">私はGodot 4でゲームを作っている初心者です。いま「バスの押しボタン」という幼児向けの小さなゲームを作っています。
 
 【ゲームの内容】
-・画面の上半分に横から見たバス、下半分に大きな押しボタンが1つ
-・ボタンを押すと「とまります」ランプが点いてチャイムが鳴る
+・スマホの縦画面。上1/3に横から見たバス、下2/3に路線バスの降車押しボタン
+・押しボタンが主役で、バスは脇役
+・ボタンを押すと「とまります」の表示窓が赤く点灯してチャイムが鳴る
 ・次のバス停でバスが減速して停まり、ドアが開いて乗客が1人降りる
-・ドアが閉まると発車し、ランプが消えて、また次のバス停へ向かう（繰り返し）
+・ドアが閉まると発車し、表示窓が消灯して、また次のバス停へ向かう（繰り返し）
 ・幼児向けなので失敗はなく、何度押しても壊れない
+・itch.io に上げてスマホのブラウザで遊ぶ想定
 
 【画面設定】
-・解像度 320×480、Stretch Mode は viewport、Aspect は keep
-・上が y=0〜300、下が y=300〜480。地面の高さは y=250
+・解像度 320×480、Stretch Mode は viewport、Aspect は expand
+・expand なので横320は固定、縦の高さは機種ごとに変わる（およそ600〜700）
+・TopView（バスの世界）の原点を画面の上から1/3の位置に置き、
+　バスまわりは全部マイナスのY座標で作っている
+　（道路の上端 y=-46、バスの屋根 y=-106、空は y=-2000 から）
+・下2/3のボタンはアンカー（割合）で配置しているので座標を持たない
 
 【ノード構成】
 Main (Node2D) ← main.gd がアタッチされている
-├─ TopView (Node2D)
+├─ TopView (Node2D)   ← _layout() が y を画面高×1/3 に設定
 │  ├─ Sky (ColorRect)
+│  ├─ Road (ColorRect)
 │  ├─ Scenery (Node2D) ├─ BgA ├─ BgB   ← 左へ流れる背景
 │  ├─ BusStop (Node2D) └─ Sign
-│  ├─ Bus (Node2D) ├─ Body ├─ Door ├─ Lamp   ← 画面中央に固定
+│  ├─ Bus (Node2D) ├─ Body ├─ Door     ← 画面中央に固定
 │  └─ Passenger
-├─ UI (CanvasLayer) ├─ Panel ├─ StopButton (Button)
+├─ UI (CanvasLayer)
+│  └─ ButtonArea (Control)   ← アンカー 上0.333〜下1.0
+│     ├─ Bg (ColorRect)
+│     └─ ButtonUnit (Button) ← ここ全体が当たり判定
+│        ├─ Display (ColorRect) └─ Lamp (Label)  ← 押すと赤く光る
+│        └─ Knob (Panel)     ← 丸い押しボタン（飾り）
 ├─ Chime (AudioStreamPlayer)
 └─ DoorSound (AudioStreamPlayer)
 
@@ -449,6 +595,8 @@ Main (Node2D) ← main.gd がアタッチされている
 ・enum State { RUNNING, STOPPING, STOPPED, DEPARTING } と、requested という bool で状態を管理
 ・停車は Tween で speed を 0 にする。減速時間は 2 × 距離 ÷ 速度 で計算して停留所にぴたりと合わせている
 ・ドアの開閉と降車の演出は await で順番に流している
+・画面サイズが変わったら _layout() が TopView の y を置き直す
+・点灯は set_lamp(bool) で Display の色と Lamp の文字色を入れ替えている
 
 【やりたいこと】
 </template>
@@ -461,12 +609,20 @@ Main (Node2D) ← main.gd がアタッチされている
 enum State { RUNNING, STOPPING, STOPPED, DEPARTING }
 
 # ---- 調整用の値 ----
+const BUS_RATIO     := 1.0 / 3.0  # 上から何割をバスに使うか
 const CRUISE_SPEED  := 60.0     # 通常の走行速度（px/秒）
 const STOP_DISTANCE := 40.0     # 停留所がここまで来たら減速を始める
 const STOP_INTERVAL := 900.0    # 次の停留所までの距離
 const SCENERY_WIDTH := 320.0    # 背景1枚の幅
 const DOOR_X        := 176.0    # ドアの位置
-const GROUND_Y      := 250.0    # 地面の高さ
+const GROUND_Y      := -46.0    # 道路の上端（TopView 内のローカル座標）
+const PASSENGER_H   := 20.0     # 乗客の背丈
+
+# ---- 表示窓の色 ----
+const LAMP_OFF_BG := Color("#3a3a3a")
+const LAMP_ON_BG  := Color("#e03b2f")
+const LAMP_OFF_FG := Color("#6a6a6a")
+const LAMP_ON_FG  := Color("#ffffff")
 
 var state: State = State.RUNNING
 var requested := false
@@ -476,14 +632,23 @@ var speed := CRUISE_SPEED
 @onready var bus_stop: Node2D      = $TopView/BusStop
 @onready var bus: Node2D           = $TopView/Bus
 @onready var door: ColorRect       = $TopView/Bus/Door
-@onready var lamp: ColorRect       = $TopView/Bus/Lamp
 @onready var passenger: ColorRect  = $TopView/Passenger
+@onready var display: ColorRect    = $UI/ButtonArea/ButtonUnit/Display
+@onready var lamp: Label           = $UI/ButtonArea/ButtonUnit/Display/Lamp
+@onready var knob: Panel           = $UI/ButtonArea/ButtonUnit/Knob
 
 
 func _ready() -> void:
-    lamp.hide()
+    get_viewport().size_changed.connect(_layout)
+    _layout()
+    set_lamp(false)
     passenger.hide()
     reset_bus_stop()
+
+
+# ---- 画面の高さに合わせる ----
+func _layout() -> void:
+    $TopView.position.y = get_viewport_rect().size.y * BUS_RATIO
 
 
 func _process(delta: float) -> void:
@@ -512,21 +677,27 @@ func reset_bus_stop() -> void:
 
 
 # ---- ボタン ----
-func _on_stop_button_pressed() -> void:
+func _on_button_unit_pressed() -> void:
     press_effect()
     if requested:
         return
     if state == State.STOPPING or state == State.STOPPED:
         return
     requested = true
-    lamp.show()
+    set_lamp(true)
     $Chime.play()
 
 
 func press_effect() -> void:
     var t := create_tween()
-    t.tween_property($UI/StopButton, "scale", Vector2(0.92, 0.92), 0.06)
-    t.tween_property($UI/StopButton, "scale", Vector2.ONE, 0.12)
+    t.tween_property(knob, "scale", Vector2(0.88, 0.88), 0.06)
+    t.tween_property(knob, "scale", Vector2.ONE, 0.12)
+
+
+func set_lamp(on: bool) -> void:
+    display.color = LAMP_ON_BG if on else LAMP_OFF_BG
+    lamp.add_theme_color_override(
+        "font_color", LAMP_ON_FG if on else LAMP_OFF_FG)
 
 
 # ---- 停車 ----
@@ -561,7 +732,7 @@ func close_door():
 
 
 func let_passenger_out():
-    passenger.position = Vector2(DOOR_X, GROUND_Y)
+    passenger.position = Vector2(DOOR_X, GROUND_Y - PASSENGER_H)
     passenger.show()
     var t := create_tween()
     t.tween_property(passenger, "position:x", DOOR_X + 46.0, 1.1)
@@ -573,7 +744,7 @@ func let_passenger_out():
 func depart() -> void:
     state = State.DEPARTING
     requested = false
-    lamp.hide()
+    set_lamp(false)
     var t := create_tween()
     t.tween_property(self, "speed", CRUISE_SPEED, 1.5)
     t.tween_callback(_on_departed)
@@ -585,12 +756,17 @@ func _on_departed() -> void:
   <h3>詰まったときの確認手順</h3>
   <table>
     <tr><th>症状</th><th>見るところ</th></tr>
-    <tr><td>ボタンを押しても何も起きない</td><td><code>pressed</code> シグナルが接続されているか。ノードドックで確認する</td></tr>
+    <tr><td>ボタンを押しても何も起きない</td><td>まず <code>Display</code>・<code>Lamp</code>・<code>Knob</code> の <code>Mouse Filter</code> が <code>Ignore</code> か。次に <code>pressed</code> シグナルの接続</td></tr>
+    <tr><td>丸ボタンの上だけ反応しない</td><td><code>Knob</code> の <code>Mouse Filter</code>。ここが <code>Stop</code> のままだと指をせき止める</td></tr>
+    <tr><td>機種によって下がはみ出る</td><td><code>ButtonArea</code> の Offset が全部0か。Anchorを変えたときGodotがOffsetを自動調整することがある</td></tr>
+    <tr><td>バスとボタンの境目がずれる</td><td><code>BUS_RATIO</code> と <code>ButtonArea</code> の Anchor Top が同じ値か（両方 0.333）</td></tr>
+    <tr><td>バスが道路から浮く／埋まる</td><td><code>Bus</code> の Position.y が <code>-46</code>（道路の上端）か</td></tr>
     <tr><td>背景の継ぎ目が飛ぶ</td><td><code>SCENERY_WIDTH</code> が実際の絵の幅と一致しているか</td></tr>
     <tr><td>停留所とずれて止まる</td><td>標識の原点位置。<code>Centered</code> と <code>Offset</code> を見る</td></tr>
     <tr><td>止まらずに通り過ぎる</td><td>実行中に「リモート」ツリーで <code>speed</code> と <code>state</code> の値を見る</td></tr>
-    <tr><td>ボタンが左上に縮む</td><td>StopButton の <code>Pivot Offset</code></td></tr>
+    <tr><td>丸ボタンが左上に縮む</td><td><code>Knob</code> の <code>Pivot Offset</code> が (65, 65) か</td></tr>
     <tr><td>2回目以降停まらない</td><td><code>depart()</code> で <code>requested = false</code> に戻しているか</td></tr>
+    <tr><td>スマホで1回目の音が鳴らない</td><td>ブラウザの制約。タイトル画面を1枚挟んでタップさせる</td></tr>
   </table>
 </section>
 <nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
