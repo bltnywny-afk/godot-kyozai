@@ -184,7 +184,11 @@ var sec=document.getElementById(id);
 var lno=sec&&sec.querySelector('.lno');
 if(lno)lno.textContent='第'+parseInt(me.num,10)+'回';
 document.querySelectorAll('.xref').forEach(function(a){var t=byId[a.dataset.ref];
-if(t){a.textContent='第'+parseInt(t.num,10)+'回';a.setAttribute('href',t.id+'.html');}});
+if(!t)return;
+var n=parseInt(t.num,10);
+a.textContent=!isNaN(n)?('第'+n+'回')
+:(t.kind==='build'||t.kind==='sketch')?('実践'+t.num):t.title;
+a.setAttribute('href',t.id+'.html');});
 var lc=document.getElementById('lessoncount');if(lc)lc.textContent=lessons.length;
 
 // 前後ナビ

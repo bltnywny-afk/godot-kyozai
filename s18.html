@@ -28,11 +28,30 @@ document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
   <p><strong>表示 → ウィンドウ</strong> の <code>Viewport Width / Height</code> に、ドット単位の実寸を入れます。Game Boy風なら 160×144。ここは<strong>拡大後のサイズではなく、絵の実寸</strong>を入れるのがコツです。</p>
 
   <h3>2. 引き伸ばし方を決める</h3>
-  <p>同じ画面の下のほうにある <code>Stretch</code> で設定します。</p>
+  <p>同じ画面の下のほうにある <code>Stretch</code> で設定します。ここには <code>Mode</code> と <code>Aspect</code> の2つがあります。</p>
+
+  <h4>Mode ＝ どう拡大するか</h4>
   <ul>
-    <li><code>Mode</code> → <strong>viewport</strong>（小さく描いてから拡大。ドット感が保たれる）</li>
-    <li><code>Aspect</code> → <strong>keep</strong>（縦横比を保ち、余りは黒帯にする）</li>
+    <li><code>viewport</code> … 小さく描いてから拡大する。<strong>ドット感が保たれる</strong></li>
+    <li><code>canvas_items</code> … 拡大してから描く。<strong>文字がぼやけにくい</strong></li>
   </ul>
+  <p>ドット絵が主役なら <code>viewport</code>、UIと文字が主役なら <code>canvas_items</code>。迷ったら <code>viewport</code> です。</p>
+
+  <h4>Aspect ＝ 画面比が違うときどうするか</h4>
+  <p>作るときに決めた縦横比と、遊ぶ人の画面の縦横比は、たいてい一致しません。そのときの振る舞いを決めます。</p>
+
+  <table>
+    <tr><th>値</th><th>どうなるか</th><th>向いている場面</th></tr>
+    <tr><td><code>keep</code></td><td>縦横比を保ち、<strong>余りは黒帯</strong>になる</td><td>パソコン向け。レイアウトが絶対に崩れない</td></tr>
+    <tr><td><code>expand</code></td><td>黒帯なしで画面いっぱい。<strong>見える範囲が広がる／狭まる</strong></td><td>スマホ向け。機種ごとに画面の細長さが違うため</td></tr>
+  </table>
+
+  <p><strong>まずは <code>keep</code> で構いません。</strong>黒帯は出ますが、どんな画面でもレイアウトが崩れないので、作っている間は考えることが減ります。</p>
+
+  <div class="note"><b>スマホで遊ばせるなら expand</b>
+  <p>スマホは機種ごとに画面の細長さがまちまちです。<code>keep</code> だと上下（または左右）に黒帯が出て、ゲームが画面中央の小さい箱に見えます。<code>expand</code> にすると全面に広がります。</p>
+  <p>ただし、ただ設定を変えるだけでは済みません。<strong>広がった側の長さが機種ごとに変わる</strong>ので、「画面の下端は y=480」といった固定の座標が使えなくなります。かわりに<strong>割合で位置を決める</strong>必要があります。</p>
+  <p>Control系のノードなら<strong>アンカー</strong>という機能でこれができます。Node2D の場合はコードで計算します。具体的な作り方は<a class="xref" data-ref="p1" href="p1.html">実践B1</a>のSTEP 0.5で扱っています。</p></div>
 
   <h3>3. 補間を切る</h3>
   <p><strong>レンダリング → テクスチャ</strong> の <code>Default Texture Filter</code> を <strong>Nearest</strong> にします。これが <code>Linear</code> のままだと、拡大時にドットの境界がにじみます。</p>

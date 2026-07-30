@@ -40,16 +40,16 @@ document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
 
   <h3>画面のイメージ</h3>
   <div class="mockwrap">
-    <div class="mock" style="aspect-ratio:320/480">
-      <div class="mock-el bg" style="left:0%;top:0%;width:100%;height:87.5%">空</div>
-      <div class="mock-el bg" style="left:8%;top:6%;width:20%;height:9%">雲</div>
-      <div class="mock-el bg" style="left:55%;top:14%;width:18%;height:8%">雲</div>
-      <div class="mock-el bg" style="left:30%;top:24%;width:16%;height:7%">雲</div>
-      <div class="mock-el obj" style="left:70%;top:22%;width:11%;height:7%">鳥</div>
-      <div class="mock-el obj" style="left:42%;top:64%;width:20%;height:22%">風船</div>
-      <div class="mock-el bg" style="left:0%;top:87.5%;width:100%;height:12.5%">地面</div>
+    <div class="mock" style="aspect-ratio:320/660">
+      <div class="mock-el bg" style="left:0%;top:0%;width:100%;height:91%">空</div>
+      <div class="mock-el bg" style="left:8%;top:5%;width:20%;height:6%">雲</div>
+      <div class="mock-el bg" style="left:55%;top:11%;width:18%;height:5%">雲</div>
+      <div class="mock-el bg" style="left:30%;top:19%;width:16%;height:5%">雲</div>
+      <div class="mock-el obj" style="left:70%;top:16%;width:11%;height:5%">鳥</div>
+      <div class="mock-el obj" style="left:40%;top:70%;width:22%;height:17%">風船</div>
+      <div class="mock-el bg" style="left:0%;top:91%;width:100%;height:9%">地面</div>
     </div>
-    <p class="mockcap">縦320×480。指で押している間だけ風船が膨らみ、離すと揺れながら上へ消えていく</p>
+    <p class="mockcap">スマホ実機での見え方。指で押している間だけ風船が膨らみ、離すと揺れながら上へ消えていく。地面は常に画面のいちばん下</p>
   </div>
 
   <h3>ノード構成（完成形）</h3>
@@ -87,11 +87,14 @@ Bird (Node2D)                  ← bird.gd
   <table class="set">
     <tr><th>場所</th><th>項目</th><th>値</th></tr>
     <tr><td>表示 → ウィンドウ</td><td>Viewport Width / Height</td><td>320 / 480</td></tr>
-    <tr><td>表示 → ウィンドウ</td><td>Stretch → Mode / Aspect</td><td>viewport / keep</td></tr>
+    <tr><td>表示 → ウィンドウ</td><td>Stretch → Mode / Aspect</td><td>viewport / <strong>expand</strong></td></tr>
     <tr><td>レンダリング → テクスチャ</td><td>Default Texture Filter</td><td>Nearest</td></tr>
   </table>
 
   <p>入力の設定は要りません。<strong>タッチはマウスとして届きます</strong>（入力デバイス → ポインティング → Emulate Mouse From Touch が既定でオン）。パソコンでクリックして作れば、そのままタブレットでも動きます。</p>
+
+  <div class="note"><b>B1と同じく expand です</b><p><a class="xref" data-ref="p1" href="p1.html">実践B1</a>のSTEP 0.5でやった通り、<strong>横320は固定、縦の高さだけが機種ごとに変わります</strong>（およそ600〜700）。</p>
+  <p>ただし今回は、B1より対処がずっと簡単です。地面と空は <code>ColorRect</code>＝Control系なので、<strong>アンカーだけで済み、コードは1行も要りません。</strong>座標を計算するのは、風船が生まれる位置ひとつだけです。</p></div>
 
   <p>絵はまだ描かなくて大丈夫です。B1と同じく、まずは ColorRect で作ります。風船は丸くなくても構いません。</p>
 
@@ -103,11 +106,16 @@ Bird (Node2D)                  ← bird.gd
   <table class="set">
     <tr><th>ノード</th><th>型</th><th>設定</th></tr>
     <tr><td>Main</td><td>Node2D</td><td>main.gd をアタッチ</td></tr>
-    <tr><td>Sky</td><td>ColorRect</td><td>Size (320, 480)、水色</td></tr>
+    <tr><td>Sky</td><td>ColorRect</td><td>アンカー 0/0/1/1、Offset 全部0、水色</td></tr>
     <tr><td>Clouds</td><td>Node2D</td><td>Position (0, 0)</td></tr>
     <tr><td>Cloud1〜3</td><td>ColorRect</td><td>Size (56, 20)、白、y は 40／90／150 あたりに散らす</td></tr>
-    <tr><td>Ground</td><td>ColorRect</td><td>Size (320, 60)、Position (0, 420)、緑</td></tr>
+    <tr><td>Ground</td><td>ColorRect</td><td>アンカー 0/<strong>1</strong>/1/1、Offset 上だけ <strong>-60</strong>、緑</td></tr>
   </table>
+
+  <div class="note"><b>アンカーで上下に貼り付ける</b>
+  <p><code>Sky</code> の <strong>0/0/1/1</strong> は「左端から右端、上端から下端」。画面が何pxになっても全面を覆います。</p>
+  <p><code>Ground</code> の <strong>0/1/1/1</strong> は、上も下も<strong>画面の下端</strong>を指しています。このままでは高さ0なので、Offset の上を <code>-60</code> にして「下端から60px上まで」と伸ばします。こうすると<strong>常に画面のいちばん下に、60pxの地面</strong>が来ます。</p>
+  <p>雲は上のほう（y=40〜150）にいるので、そのままで大丈夫です。縦が伸びるのは下方向なので、上にあるものは影響を受けません。</p></div>
 
   <pre><code># main.gd
 
@@ -267,8 +275,9 @@ signal released
 
   <pre><code># main.gd に追加
 
-const SPAWN_X := 160.0
-const SPAWN_Y := 400.0
+const SPAWN_X      := 160.0   # 画面の横幅の半分
+const GROUND_H     := 60.0    # 地面の高さ（アンカーで指定したのと同じ値）
+const SPAWN_MARGIN := 20.0    # 地面からどれだけ浮かせるか
 
 @export var balloon_scene: PackedScene
 
@@ -283,10 +292,15 @@ func _ready() -> void:
 
 func spawn_balloon() -> void:
     var b := balloon_scene.instantiate()
-    b.position = Vector2(SPAWN_X, SPAWN_Y)
+    b.position = Vector2(SPAWN_X, spawn_y())
     b.released.connect(_on_balloon_released)
     balloons.add_child(b)
     current = b
+
+
+func spawn_y() -> float:
+    # 画面の高さは機種ごとに違うので、その都度たずねる
+    return get_viewport_rect().size.y - GROUND_H - SPAWN_MARGIN
 
 
 func _input(event: InputEvent) -> void:
@@ -306,7 +320,11 @@ func _on_balloon_released() -> void:
 
   <div class="note"><b><code>current</code> が null になる意味</b><p>放した瞬間に <code>current = null</code> にすることで、飛んでいる風船を間違って操作しなくなります。次の風船が出るまでの0.7秒は、押しても何も起きません。<strong>「いま操作できる対象はどれか」を1つの変数で持つ</strong>のは、この先も繰り返し出てくる形です。</p></div>
 
-  <div class="check"><b>ここで確認</b><p>F5で main.tscn を実行。押して離すと風船が飛び、少し待つと次の風船が下に現れる。これを何度でも繰り返せる。<strong>リモートツリーで <code>Balloons</code> を開き、風船が溜まっていないこと</strong>を必ず確認してください。</p></div>
+  <div class="note"><b>定数ではなく関数にする</b><p>B1では画面サイズが変わったとき <code>_layout()</code> を呼び直しました。今回は<strong>風船が生まれる瞬間にだけ位置が要る</strong>ので、そのとき計算すれば足ります。すでに浮かんでいる風船は上へ向かうので、後から画面が変わっても困りません。</p>
+  <p><code>const SPAWN_Y := 400.0</code> のように固定値で書いてしまうと、縦の長い機種では<strong>地面のはるか上に風船が浮きます。</strong>「画面の下端から測る」に変えるのが要点です。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>F5で main.tscn を実行。押して離すと風船が飛び、少し待つと次の風船が下に現れる。これを何度でも繰り返せる。<strong>リモートツリーで <code>Balloons</code> を開き、風船が溜まっていないこと</strong>を必ず確認してください。</p>
+  <p><strong>ウィンドウの縦を伸び縮みさせてから風船を出し直すと、必ず地面のすぐ上に現れる。</strong>地面も画面の下端に貼り付いたままになる。</p></div>
 
   <span class="stepnum">STEP 6</span>
   <h3 class="st">色が毎回変わる</h3>
@@ -456,7 +474,11 @@ func _on_bird_timer_timeout() -> void:
 ・幼児向けなので割れないし、記録もつかない。失敗という状態がない
 
 【画面設定】
-・解像度 320×480、Stretch Mode は viewport、Aspect は keep
+・解像度 320×480、Stretch Mode は viewport、Aspect は expand
+・expand なので横320は固定、縦の高さは機種ごとに変わる（およそ600〜700）
+・Sky と Ground は ColorRect なのでアンカーで配置している
+　Sky は 0/0/1/1（全面）、Ground は 0/1/1/1 で Offset 上 -60（下端に60px）
+・風船が生まれる y だけは get_viewport_rect() から計算している
 
 【シーン構成】
 main.tscn : Main (Node2D) ← main.gd
@@ -541,10 +563,11 @@ func release() -> void:
 extends Node2D
 
 # ---- 調整用の値 ----
-const CLOUD_SPEED := 8.0
-const SPAWN_X := 160.0
-const SPAWN_Y := 400.0
-const NEXT_DELAY := 0.7      # 次の風船が出るまでの待ち時間
+const CLOUD_SPEED  := 8.0
+const SPAWN_X      := 160.0   # 画面の横幅の半分
+const GROUND_H     := 60.0    # 地面の高さ（アンカーで指定したのと同じ値）
+const SPAWN_MARGIN := 20.0    # 地面からどれだけ浮かせるか
+const NEXT_DELAY   := 0.7     # 次の風船が出るまでの待ち時間
 
 const COLORS := [
     Color("ff6b6b"), Color("ffd166"), Color("06d6a0"),
@@ -586,11 +609,16 @@ func _input(event: InputEvent) -> void:
 # ---- 風船 ----
 func spawn_balloon() -> void:
     var b := balloon_scene.instantiate()
-    b.position = Vector2(SPAWN_X, SPAWN_Y)
+    b.position = Vector2(SPAWN_X, spawn_y())
     b.modulate = COLORS.pick_random()
     b.released.connect(_on_balloon_released)
     balloons.add_child(b)
     current = b
+
+
+func spawn_y() -> float:
+    # 画面の高さは機種ごとに違うので、その都度たずねる
+    return get_viewport_rect().size.y - GROUND_H - SPAWN_MARGIN
 
 
 func _on_balloon_released() -> void:
@@ -616,6 +644,10 @@ func _on_bird_timer_timeout() -> void:
     <tr><td>下に伸びながら大きくなる</td><td>Balloon の子の Position。原点がひもの下端に来ているか</td></tr>
     <tr><td>色が変わらない</td><td><code>modulate</code> を <code>add_child</code> の前後どちらで設定しても効きます。COLORS が空でないか</td></tr>
     <tr><td>鳥が出ない</td><td>BirdTimer の Autostart と、<code>bird_scene</code> の割り当て</td></tr>
+    <tr><td>地面が画面の途中に浮く</td><td><code>Ground</code> のアンカーが 0/<strong>1</strong>/1/1 か。上を1にし忘れると下端に付かない</td></tr>
+    <tr><td>風船が地面から離れて出る</td><td><code>SPAWN_Y</code> の固定値が残っていないか。<code>spawn_y()</code> を使う</td></tr>
+    <tr><td>画面の下に空じゃない部分ができる</td><td><code>Sky</code> のアンカーが 0/0/1/1 で Offset が全部0か</td></tr>
+    <tr><td>スマホで1回目の音が鳴らない</td><td>ブラウザの制約。タイトル画面を1枚挟んでタップさせる</td></tr>
   </table>
 </section>
 <nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
