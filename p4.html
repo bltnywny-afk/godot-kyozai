@@ -18,9 +18,9 @@ document.documentElement.dataset.theme=(t==='light')?'light':'dark';}catch(e){}
 <div class="lwrap">
 <main>
 <section id="p4" data-kind="build" data-title="なかまさがし" data-file="main.gd">
-  <p class="eyebrow">実践 B4 · 全8ステップ · 規模：4〜6日</p>
+  <p class="eyebrow">実践 B4 · 全9ステップ · 規模：4〜6日</p>
   <h2>なかまさがし — 幼児向け知育</h2>
-  <p class="aim">新しく覚える：データとロジックを分ける／Resourceで問題を持つ／UIコンテナで並べる／正解の演出を作る。</p>
+  <p class="aim">新しく覚える：データとロジックを分ける／Resourceで問題を持つ／CSV・JSONを外部から読む／UIコンテナで並べる／正解の演出を作る。</p>
 
   <div class="note"><b>この章は設計の練習です</b><p>技術的にはB3より易しい部分もあります。それでもここに置いているのは、<strong>問題を100問に増やしても、コードを1行も触らずに済む形</strong>を作る練習だからです。この形が作れないと、B8の経営シムやB9の農場シムで扱うデータ量に耐えられません。</p></div>
 
@@ -323,10 +323,240 @@ func set_choice(btn: Button, item: Item, is_correct: bool) -> void:
 
   <div class="check"><b>ここで確認</b><p>インスペクタに並べた問題が、シャッフルされて順に出る。<strong>問題を1問足す作業が、Question のファイルを1つ作ってインスペクタに足すだけ</strong>で済んでいる。コードを触る必要がない。</p></div>
 
+  <span class="stepnum">STEP 6.5</span>
+  <h3 class="st">問題を外部ファイルから読む</h3>
+
+  <p>STEP 6 で問題はコードから出ましたが、まだ<strong>Godotのエディタを開かないと編集できません</strong>。問題を50問に増やすとき、<code>.tres</code> を50個作ってインスペクタに並べるのは骨が折れます。</p>
+
+  <p>そこで、問題を<strong>表計算ソフトやテキストエディタで編集できるファイル</strong>に出します。データの持ち方には3段階あり、ここが3段目です。</p>
+
+  <table>
+    <tr><th>持ち方</th><th>編集する人・道具</th><th>書き出したあと</th></tr>
+    <tr><td>コードに直書き</td><td>自分・Godot</td><td>変更できない</td></tr>
+    <tr><td><code>.tres</code>（Resource）</td><td>自分・Godot</td><td>変更できない</td></tr>
+    <tr><td><strong>CSV / JSON</strong></td><td><strong>誰でも・表計算やメモ帳</strong></td><td><strong>置き場所しだいで変更できる</strong></td></tr>
+  </table>
+
+  <h4>res:// と user:// はまったく別物</h4>
+
+  <p>ファイルをどこに置くかで、性質が変わります。<strong>ここを取り違えると、書き出したあとに「編集できない」と気づいて作り直しになります。</strong></p>
+
+  <table>
+    <tr><th></th><th><code>res://</code></th><th><code>user://</code></th></tr>
+    <tr><td>実体</td><td>プロジェクトのフォルダ</td><td>遊ぶ人のパソコンの保存領域</td></tr>
+    <tr><td>書き出すと</td><td><strong>.pck に焼き込まれる</strong></td><td>そのままファイルとして残る</td></tr>
+    <tr><td>あとから編集</td><td><strong>できない</strong></td><td>できる</td></tr>
+    <tr><td>書き込み</td><td>できない（読み取り専用）</td><td>できる</td></tr>
+    <tr><td>向いているもの</td><td>作者が決める問題データ</td><td>セーブデータ、遊ぶ人が足す問題</td></tr>
+  </table>
+
+  <p><strong>この章では <code>res://</code> を使います。</strong>問題は作者が決めるものだからです。開発中はプロジェクトのフォルダを直接いじれるので、これで不便はありません。</p>
+
+  <div class="note"><b>user:// の実際の場所</b><p>フォルダのパスは <code>OS.get_user_data_dir()</code> で調べられます。Windowsなら <code>%APPDATA%\Godot\app_userdata\プロジェクト名</code>、Macなら <code>~/Library/Application Support/Godot/app_userdata/プロジェクト名</code> あたりです。<a class="xref" data-ref="p6" href="p6.html">実践B6</a>のセーブデータはここに置いています。</p></div>
+
+  <h4>CSVで書く</h4>
+
+  <p>まず問題データです。<strong>1行1問</strong>の表なので、CSVが向いています。プロジェクトに <code>res://data/</code> フォルダを作り、2つのファイルを置きます。</p>
+
+  <pre data-file="items.csv"><code># res://data/items.csv
+
+id,name,image
+apple,りんご,res://items/apple.png
+banana,バナナ,res://items/banana.png
+orange,みかん,res://items/orange.png
+car,くるま,res://items/car.png
+bus,バス,res://items/bus.png
+train,でんしゃ,res://items/train.png</code></pre>
+
+  <pre data-file="questions.csv"><code># res://data/questions.csv
+
+group,samples,correct,wrong
+くだもの,apple|banana,orange,car
+のりもの,car|bus,train,apple</code></pre>
+
+  <p><strong>絵そのものではなく、絵の場所（パス）を文字列で持ちます。</strong>CSVには文字と数字しか書けないためです。読み込むときに <code>load()</code> でその場所から絵を取ってきます。</p>
+
+  <p>問題のほうは <code>apple</code> のような<strong>IDで品物を指しています</strong>。同じ「りんご」を何問でも使い回せて、りんごの絵を差し替えれば全部の問題で変わります。表を分けてIDで結ぶのは、データを扱うときの定石です。</p>
+
+  <div class="note"><b>お手本が2つあるのを <code>|</code> でしのいでいる</b><p>CSVは1マスに1つの値しか置けないので、複数のお手本を <code>apple|banana</code> と自分で区切っています。<strong>この不格好さがCSVの限界です。</strong>次に出てくるJSONなら、配列としてそのまま書けます。</p></div>
+
+  <div class="note"><b>Godotは .csv を翻訳ファイルとして取り込みます</b>
+  <p><strong>ここは必ず引っかかります。</strong>Godot 4 は <code>res://</code> に置かれた <code>.csv</code> を、翻訳（多言語対応）のファイルだと判断して取り込もうとします。見出しが決まった形になっていないので、インポートエラーが出ます。</p>
+  <p>直し方は、そのCSVを選び、<strong>「インポート」ドックの <code>Import As</code> を「Keep File (exported as is)」に変えて、「再インポート」を押す</strong>ことです。これで、ただのファイルとして扱われるようになります。</p>
+  <p>この操作を忘れると、実行時に<strong>ファイルが見つからないというエラー</strong>になります。取り込まれた翻訳データに化けていて、元のCSVが書き出しに含まれないためです。</p></div>
+
+  <p>読み込むコードです。<code>main.gd</code> に足します。</p>
+
+  <pre><code># main.gd に追加
+
+const ITEMS_CSV     := "res://data/items.csv"
+const QUESTIONS_CSV := "res://data/questions.csv"
+
+
+# 品物の表を読む。返すのは { "apple": Item, ... } という辞書
+func load_items(path: String) -> Dictionary:
+    var items := {}
+    if not FileAccess.file_exists(path):
+        push_error("ファイルがありません: " + path)
+        return items
+
+    var f := FileAccess.open(path, FileAccess.READ)
+    f.get_csv_line()                      # 1行目は見出しなので捨てる
+
+    while not f.eof_reached():
+        var row := f.get_csv_line()
+        if row.size() &lt; 3 or row[0] == "":
+            continue                      # 空行や欠けた行は飛ばす
+        var it := Item.new()
+        it.name  = row[1]
+        it.image = load(row[2])
+        items[row[0]] = it
+
+    return items</code></pre>
+
+  <pre><code># main.gd に追加
+
+# 問題の表を読む。品物の辞書を渡して、IDから実体を引く
+func load_questions(path: String, items: Dictionary) -> Array[Question]:
+    var list: Array[Question] = []
+    if not FileAccess.file_exists(path):
+        push_error("ファイルがありません: " + path)
+        return list
+
+    var f := FileAccess.open(path, FileAccess.READ)
+    f.get_csv_line()
+
+    while not f.eof_reached():
+        var row := f.get_csv_line()
+        if row.size() &lt; 4 or row[0] == "":
+            continue
+
+        if not items.has(row[2]) or not items.has(row[3]):
+            push_warning("知らないIDがあります: " + row[0])
+            continue                      # 1問飛ばすだけで、止めない
+
+        var q := Question.new()
+        q.group_name = row[0]
+        for id in row[1].split("|"):
+            if items.has(id):
+                q.samples.append(items[id])
+        q.correct = items[row[2]]
+        q.wrong   = items[row[3]]
+        list.append(q)
+
+    return list</code></pre>
+
+  <p>あとは <code>_ready</code> で呼ぶだけです。インスペクタの <code>Questions</code> は空のままで構いません。</p>
+
+  <pre><code># _ready を書き換える
+
+func _ready() -> void:
+    var items := load_items(ITEMS_CSV)
+    questions = load_questions(QUESTIONS_CSV, items)
+    if questions.is_empty():
+        push_error("問題が1問も読めませんでした")
+        return
+    next_question()</code></pre>
+
+  <div class="note"><b>1行おかしくても、止めない</b><p><code>continue</code> でその行だけ飛ばしているのが要点です。データは手で書くので<strong>必ず間違いが混ざります。</strong>1行のミスでゲームが起動しなくなると、原因を探すのが苦痛になります。</p>
+  <p>かわりに <code>push_warning()</code> で「この行が変だった」と出力パネルに残します。遊びは続けられて、あとから直せます。</p></div>
+
+  <div class="check"><b>ここで確認</b><p>CSVに1問足して実行すると、その問題が出てくる。<strong>Godotのエディタでは何も操作していない。</strong>わざとIDを打ち間違えると、その問題だけ飛ばされて、出力パネルに警告が出る。</p></div>
+
+  <h4>JSONで書く</h4>
+
+  <p>同じデータをJSONにするとこうなります。<strong>お手本が配列としてそのまま書ける</strong>のが違いです。</p>
+
+  <pre data-file="quiz.json"><code># res://data/quiz.json
+
+{
+  "items": {
+    "apple":  { "name": "りんご",   "image": "res://items/apple.png" },
+    "banana": { "name": "バナナ",   "image": "res://items/banana.png" },
+    "orange": { "name": "みかん",   "image": "res://items/orange.png" },
+    "car":    { "name": "くるま",   "image": "res://items/car.png" }
+  },
+  "questions": [
+    {
+      "group": "くだもの",
+      "samples": ["apple", "banana"],
+      "correct": "orange",
+      "wrong": "car"
+    }
+  ]
+}</code></pre>
+
+  <pre><code># main.gd（CSVのかわりに使う場合）
+
+const QUIZ_JSON := "res://data/quiz.json"
+
+
+func load_quiz(path: String) -> Array[Question]:
+    var list: Array[Question] = []
+    if not FileAccess.file_exists(path):
+        push_error("ファイルがありません: " + path)
+        return list
+
+    var f := FileAccess.open(path, FileAccess.READ)
+    var data = JSON.parse_string(f.get_as_text())
+    if data == null:
+        push_error("JSONの形が壊れています: " + path)
+        return list
+
+    # 品物
+    var items := {}
+    var raw_items: Dictionary = data.get("items", {})
+    for id in raw_items:
+        var d: Dictionary = raw_items[id]
+        var it := Item.new()
+        it.name  = d.get("name", "")
+        it.image = load(d.get("image", ""))
+        items[id] = it
+
+    # 問題
+    for qd in data.get("questions", []):
+        var correct_id: String = qd.get("correct", "")
+        var wrong_id: String   = qd.get("wrong", "")
+        if not items.has(correct_id) or not items.has(wrong_id):
+            push_warning("知らないIDがあります")
+            continue
+        var q := Question.new()
+        q.group_name = qd.get("group", "")
+        for id in qd.get("samples", []):
+            if items.has(id):
+                q.samples.append(items[id])
+        q.correct = items[correct_id]
+        q.wrong   = items[wrong_id]
+        list.append(q)
+
+    return list</code></pre>
+
+  <div class="note"><b>JSONの数字は全部 float になります</b><p>JSONには整数と小数の区別がないため、Godotは<strong>数値を全部 float として読みます。</strong><code>3</code> と書いても <code>3.0</code> で返ります。</p>
+  <p>配列の添字や <code>%</code> の計算に使うとエラーになるので、<code>int(data["回数"])</code> のように包んで整数へ戻します。<a class="xref" data-ref="p6" href="p6.html">実践B6</a>のセーブデータ読み込みでも同じことをしています。</p>
+  <p>この章の問題データは文字列だけなので、今回は関係ありません。数値のパラメータ（敵の攻撃力、制限時間など）を持たせるときに効いてきます。</p></div>
+
+  <div class="note"><b>キーが無いときに落ちないように</b><p><code>data["items"]</code> と直接書くと、キーが無いときにエラーで止まります。<code>data.get("items", {})</code> と書けば、無いときは空の辞書が返るだけで済みます。<strong>第2引数が「無かったときの値」です。</strong></p></div>
+
+  <h4>どちらを使うか</h4>
+
+  <table>
+    <tr><th></th><th>CSV</th><th>JSON</th></tr>
+    <tr><td>形</td><td>表（1行1件）</td><td>入れ子にできる</td></tr>
+    <tr><td>作る道具</td><td><strong>表計算ソフトで作れる</strong></td><td>テキストエディタ</td></tr>
+    <tr><td>配列を持つ</td><td>苦手（区切り文字でしのぐ）</td><td><strong>得意</strong></td></tr>
+    <tr><td>項目数が可変</td><td>苦手</td><td><strong>得意</strong></td></tr>
+    <tr><td>向いているもの</td><td>敵の能力表、アイテム表、問題集</td><td>設定ファイル、階層のあるデータ</td></tr>
+  </table>
+
+  <p><strong>項目が決まっていて件数が多いならCSV、形が入り組んでいるならJSON。</strong>この章の問題データはどちらでも書けるので、表計算で量産したいならCSV、お手本の数を問題ごとに変えたいならJSONです。</p>
+
+  <div class="note"><b>Excelから出すときは文字コードに注意</b><p>Excelで「CSVとして保存」すると、環境によっては<strong>Shift_JIS</strong>で書き出されます。Godotは<strong>UTF-8</strong>しか読めないので、日本語が化けます。</p>
+  <p>「CSV UTF-8（コンマ区切り）」という形式を選ぶか、Googleスプレッドシートを使ってください（こちらは既定でUTF-8です）。<strong>文字化けしたら、まずここを疑います。</strong></p></div>
+
   <span class="stepnum">STEP 7</span>
   <h3 class="st">問題を増やして、仕上げる</h3>
 
-  <p>ここからは絵とデータを作る作業です。コードはもう触りません。</p>
+  <p>ここからは絵とデータを作る作業です。コードはもう触りません。<strong>問題を足すのはCSVに1行足すだけ</strong>なので、表計算ソフトを開いて量産できます。</p>
 
   <ul>
     <li><strong>まず10問。</strong>くだもの／のりもの／どうぶつ／たべもの あたりで作ると、幼児にも仲間の区別がつきます。</li>
@@ -336,7 +566,7 @@ func set_choice(btn: Button, item: Item, is_correct: bool) -> void:
     <li><strong>ごほうびに変化を。</strong>正解時の言葉を「せいかい！」「すごい！」「よくできました！」からランダムに選ぶと、飽きが来にくくなります。</li>
   </ul>
 
-  <div class="try"><b>完成の目安</b><p>10問がシャッフルされて延々と出る。正解すると星が舞って次へ進む。まちがえても止まらず、何度でも選べる。<strong>問題を1問足すのに、コードを1行も触らない。</strong>ここまでできたら完成です。</p></div>
+  <div class="try"><b>完成の目安</b><p>10問がシャッフルされて延々と出る。正解すると星が舞って次へ進む。まちがえても止まらず、何度でも選べる。<strong>問題を1問足すのに、CSVを1行足すだけで済み、Godotを開く必要すらない。</strong>ここまでできたら完成です。</p></div>
 
   <h3>余裕ができたら足す機能</h3>
   <p>ここから先は作らなくても完成です。上から順に、だいたい簡単な順です。「プロンプトをコピー」を押すと、このゲームの内容とコードの作りまで入った質問文がコピーされます。</p>
@@ -383,6 +613,12 @@ func set_choice(btn: Button, item: Item, is_correct: bool) -> void:
     <button class="askbtn" data-ask="まちがえたグループを記録しておいて、そのグループの問題が出やすくなるようにしたいです。記録は保存して次回も引き継ぎたいです。">プロンプトをコピー</button>
   </div>
 
+  <div class="idea"><span class="lv">ふつう</span>
+    <h4>書き出したあとでも問題を足せるようにする</h4>
+    <p>いまは <code>res://</code> なので、書き出すと問題を変えられません。初回起動時に <code>user://</code> へコピーし、以降はそちらを読むようにすると、配ったあとでも問題を足せるようになります。</p>
+    <button class="askbtn" data-ask="いま問題データを res:// のCSVから読んでいますが、書き出したあとでも問題を追加できるようにしたいです。初回起動時に user:// へコピーして、以降は user:// のほうを読む形にしたいです。">プロンプトをコピー</button>
+  </div>
+
   <div class="idea"><span class="lv">むずかしい</span>
     <h4>問題を画面から追加できるようにする</h4>
     <p>エディタを開かなくても、アプリの中で写真を撮って問題を作れる。手間はかかりますが、自分の家のものを問題にできます。</p>
@@ -427,8 +663,20 @@ question.gd : class_name Question extends Resource
   @export var correct: Item
   @export var wrong: Item
 
+問題は res://data/ のCSVから読み込んでいる（インスペクタには並べていない）
+  items.csv     : id,name,image      1行1品物。imageは画像のパス文字列
+  questions.csv : group,samples,correct,wrong
+                  samples は apple|banana のように | で区切る
+                  correct と wrong は items.csv の id を指す
+  ※ .csv は「Keep File (exported as is)」でインポートしている
+    （既定だと翻訳ファイルとして取り込まれてしまうため）
+
 【いまのコードの作り】
-・Main は @export var questions: Array[Question] で問題を持つ
+・_ready で load_items() → load_questions() を呼び、questions に入れている
+・load_items は FileAccess.get_csv_line() で1行ずつ読み、Item.new() を作って
+  { id: Item } の辞書にする。画像は load(パス文字列) で読み込む
+・行が欠けていたり知らないIDが来たら、push_warning して continue で飛ばす
+　（1行のミスでゲームが起動しなくなるのを避けるため）
 ・pool に duplicate() したものを shuffle() して、pop_front() で1問ずつ取り出す
 ・正解が左右どちらに来るかは randi() % 2 で実行時に決めている
 ・各ボタンに set_meta("correct", true/false) で正解かどうかを持たせている
@@ -464,6 +712,9 @@ extends Resource
 
 extends Control
 
+const ITEMS_CSV     := "res://data/items.csv"
+const QUESTIONS_CSV := "res://data/questions.csv"
+
 @export var questions: Array[Question] = []
 
 var pool: Array[Question] = []
@@ -479,7 +730,66 @@ var answered := false
 func _ready() -> void:
     choice_a.pressed.connect(_on_choice.bind(choice_a))
     choice_b.pressed.connect(_on_choice.bind(choice_b))
+
+    var items := load_items(ITEMS_CSV)
+    questions = load_questions(QUESTIONS_CSV, items)
+    if questions.is_empty():
+        push_error("問題が1問も読めませんでした")
+        return
+
     next_question()
+
+
+# ---- 外部データの読み込み ----
+func load_items(path: String) -> Dictionary:
+    var items := {}
+    if not FileAccess.file_exists(path):
+        push_error("ファイルがありません: " + path)
+        return items
+
+    var f := FileAccess.open(path, FileAccess.READ)
+    f.get_csv_line()                      # 見出しを捨てる
+
+    while not f.eof_reached():
+        var row := f.get_csv_line()
+        if row.size() &lt; 3 or row[0] == "":
+            continue
+        var it := Item.new()
+        it.name  = row[1]
+        it.image = load(row[2])
+        items[row[0]] = it
+
+    return items
+
+
+func load_questions(path: String, items: Dictionary) -> Array[Question]:
+    var list: Array[Question] = []
+    if not FileAccess.file_exists(path):
+        push_error("ファイルがありません: " + path)
+        return list
+
+    var f := FileAccess.open(path, FileAccess.READ)
+    f.get_csv_line()
+
+    while not f.eof_reached():
+        var row := f.get_csv_line()
+        if row.size() &lt; 4 or row[0] == "":
+            continue
+
+        if not items.has(row[2]) or not items.has(row[3]):
+            push_warning("知らないIDがあります: " + row[0])
+            continue
+
+        var q := Question.new()
+        q.group_name = row[0]
+        for id in row[1].split("|"):
+            if items.has(id):
+                q.samples.append(items[id])
+        q.correct = items[row[2]]
+        q.wrong   = items[row[3]]
+        list.append(q)
+
+    return list
 
 
 # ---- 出題 ----
@@ -552,6 +862,14 @@ func on_wrong(btn: Button) -> void:
     <tr><td>絵が出ない</td><td>TextureRect の Expand Mode と Custom Minimum Size</td></tr>
     <tr><td>演出中に連打で二重に進む</td><td><code>answered</code> を正解の直後に true にしているか</td></tr>
     <tr><td>ボタンが傾いたまま次の問題へ</td><td><code>set_choice</code> で <code>rotation = 0.0</code> に戻しているか</td></tr>
+    <tr><td><strong>CSVが見つからないと言われる</strong></td><td>インポートドックで <code>Import As</code> を「Keep File (exported as is)」にしたか。既定では翻訳ファイルとして取り込まれる</td></tr>
+    <tr><td>CSVのインポートでエラーが出る</td><td>同上。翻訳ファイルとして読もうとして見出しが合わずに失敗している</td></tr>
+    <tr><td>日本語が文字化けする</td><td>CSVの文字コード。Excelなら「CSV UTF-8」で保存し直す</td></tr>
+    <tr><td>問題が1問も出ない</td><td>出力パネルを見る。パスの綴りか、IDの打ち間違いで全行飛ばされている</td></tr>
+    <tr><td>一部の問題だけ出ない</td><td>出力パネルの警告。<code>correct</code>／<code>wrong</code> のIDが items.csv にあるか</td></tr>
+    <tr><td>絵だけ出ない（文字は出る）</td><td><code>image</code> 列のパス。<code>res://</code> から始まる正しい綴りか</td></tr>
+    <tr><td>JSONで <code>null</code> が返る</td><td>カンマの付け忘れ・閉じ括弧の不足。テキストエディタのJSON検証にかける</td></tr>
+    <tr><td>書き出したら問題が古いまま</td><td><code>res://</code> は .pck に焼き込まれる。差し替えたいなら <code>user://</code> に置く設計にする</td></tr>
   </table>
 </section>
 <nav class="pagenav"><a class="nav-prev" href="#"></a><a class="nav-next" href="#"></a></nav>
